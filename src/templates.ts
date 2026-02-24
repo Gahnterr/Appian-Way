@@ -141,6 +141,25 @@ export function cardLayout(props: {
 )`
 }
 
+// --- imageField ---
+export function imageField(props: {
+  altText?: string,
+  size?: string,
+}): string {
+  const sailProps: string[] = [
+    `images: {
+    a!documentImage(
+      document: document("PLACEHOLDER_DOCUMENT_ID"),
+      altText: "${(props.altText ?? 'image').replace(/"/g, '\\"')}"
+    )
+  }`
+  ]
+  if (props.size) sailProps.push(`size: "${props.size}"`)
+  return `a!imageField(
+  ${sailProps.join(',\n  ')}
+)`
+}
+
 // --- Convenience Wrappers ---
 
 export function generateButtonArrayLayout(buttons: string[], align?: string, marginAbove?: string, marginBelow?: string): string {

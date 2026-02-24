@@ -5,13 +5,20 @@
 // case to the routing logic below.
 
 import type { SAILNodeResult } from './types'
-import { generateButtonSAIL } from './components/Button'
-import { generateRichTextSAIL } from './components/RichText'
-import { generateFrameSAIL } from './components/Frame'
+import { generateButtonSAIL } from './components/ButtonWidget'
+import { generateRichTextSAIL } from './components/RichTextDisplayField'
+import { generateFrameSAIL } from './components/CardLayout'
+import { generateImageFieldSAIL } from './components/ImageField'
 import { generateButtonArrayLayout } from './templates'
 
+/** Check whether a node has at least one image fill */
+function hasImageFill(node: BaseNode): boolean {
+  if (!('fills' in node)) return false
+  const fills = (node as GeometryMixin).fills
+  return Array.isArray(fills) && fills.some(f => f.type === 'IMAGE')
+}
+
 export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResult> {
-  console.log('[Appian Way] generateSAILForNode — type:', node.type, '| name:', ('name' in node ? node.name : 'N/A'))
 
   // --- Instance nodes (component instances like Button) ---
   if (node.type === 'INSTANCE') {
@@ -30,13 +37,9 @@ export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResul
 
   // --- Text nodes → Rich Text Display Field ---
   if (node.type === 'TEXT') {
-    console.log('[Appian Way] TEXT branch hit for:', ('name' in node ? node.name : '???'))
     try {
-      const result = generateRichTextSAIL(node as TextNode)
-      console.log('[Appian Way] TEXT result length:', result.length)
-      return result
+      return generateRichTextSAIL(node as TextNode)
     } catch (_e) {
-      console.log('[Appian Way] TEXT fallback catch:', _e)
       const chars = String((node as TextNode).characters ?? '')
       return `a!richTextDisplayField(
   labelPosition: "COLLAPSED",
@@ -47,6 +50,11 @@ export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResul
   }
 )`
     }
+  }
+
+  // --- Image fills → Image Field ---
+  if (hasImageFill(node)) {
+    return generateImageFieldSAIL(node as SceneNode)
   }
 
   // --- Frame nodes → Card Layout / SideBySide / ButtonArray ---

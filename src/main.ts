@@ -7,7 +7,6 @@ import { generateSAILForNode } from './codegen'
 
 figma.codegen.on('generate', async (event) => {
   const node = event.node
-  console.log('[Appian Way] generate fired — node.type:', node.type, '| node.name:', node.name)
   try {
     const codeResult = await generateSAILForNode(node)
     let codeString: string
@@ -18,11 +17,10 @@ figma.codegen.on('generate', async (event) => {
     } else {
       codeString = ''
     }
-    console.log('[Appian Way] codeString length:', codeString.length)
     return [
       {
         language: 'JAVASCRIPT',
-        code: codeString || `// Unsupported node: type="${node.type}" name="${node.name}"`,
+        code: codeString || '// Select a supported SAIL component.',
         title: 'SAIL Code',
       },
     ]
