@@ -7,20 +7,30 @@ import { generateSAILForNode } from './codegen'
 
 figma.codegen.on('generate', async (event) => {
   const node = event.node
-  const codeResult = await generateSAILForNode(node)
-  let codeString: string
-  if (typeof codeResult === 'string') {
-    codeString = codeResult
-  } else if (codeResult && typeof codeResult === 'object' && 'code' in codeResult) {
-    codeString = codeResult.code
-  } else {
-    codeString = ''
+  try {
+    const codeResult = await generateSAILForNode(node)
+    let codeString: string
+    if (typeof codeResult === 'string') {
+      codeString = codeResult
+    } else if (codeResult && typeof codeResult === 'object' && 'code' in codeResult) {
+      codeString = codeResult.code
+    } else {
+      codeString = ''
+    }
+    return [
+      {
+        language: 'JAVASCRIPT',
+        code: codeString || '// Select a supported SAIL component.',
+        title: 'SAIL Code',
+      },
+    ]
+  } catch (e) {
+    return [
+      {
+        language: 'JAVASCRIPT',
+        code: `// Error generating SAIL: ${e instanceof Error ? e.message : String(e)}`,
+        title: 'SAIL Code',
+      },
+    ]
   }
-  return [
-    {
-      language: 'JAVASCRIPT',
-      code: codeString || '// Select a supported SAIL component.',
-      title: 'SAIL Code',
-    },
-  ]
 })

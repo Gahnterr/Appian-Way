@@ -30,61 +30,70 @@ function mapFontSizeToAppian(px: number): string | undefined {
 /**
  * Generate a!richTextDisplayField SAIL code from a Figma TextNode.
  * Uses getStyledTextSegments to respect per-character formatting.
+ * Falls back to node.characters if the API is unavailable.
  */
 export function generateRichTextSAIL(
   node: TextNode,
   marginAbove?: string,
   marginBelow?: string
 ): string {
-  // Retrieve segments split by visual styling differences
-  const segments = node.getStyledTextSegments(
-    ['fontSize', 'fontName', 'fontWeight', 'textDecoration', 'fills']
-  )
+  let items: string[]
 
-  const items: string[] = segments.map(seg => {
-    const text = seg.characters
+  try {
+    // Retrieve segments split by visual styling differences
+    const segments = node.getStyledTextSegments(
+      ['fontSize', 'fontName', 'fontWeight', 'textDecoration', 'fills']
+    )
 
-    // --- Size ---
-    const size = mapFontSizeToAppian(seg.fontSize)
+    items = segments.map(seg => {
+      const text = seg.characters
 
-    // --- Styles (bold, italic, underline, strikethrough) ---
-    const styles: string[] = []
-    // Bold: fontWeight ≥ 600 covers Semi Bold, Bold, Extra Bold, etc.
-    if (seg.fontWeight >= 600) {
-      styles.push('STRONG')
-    }
-    // Italic: check the fontName style string (e.g. "Italic", "Bold Italic")
-    if (seg.fontName.style.toLowerCase().includes('italic')) {
-      styles.push('EMPHASIS')
-    }
-    // Underline / Strikethrough from textDecoration
-    if (seg.textDecoration === 'UNDERLINE') {
-      styles.push('UNDERLINE')
-    }
-    if (seg.textDecoration === 'STRIKETHROUGH') {
-      styles.push('STRIKETHROUGH')
-    }
+      // --- Size ---
+      const size = mapFontSizeToAppian(seg.fontSize)
 
-    // --- Color ---
-    let color: string | undefined
-    if (seg.fills && seg.fills.length > 0) {
-      const fill = seg.fills[0]
-      if (fill.type === 'SOLID') {
-        const hex = rgbToHex(fill.color)
-        // Only include color if it's not default black
-        if (hex !== '#000000') {
-          color = hex
+      // --- Styles (bold, italic, underline, strikethrough) ---
+      const styles: string[] = []
+      // Bold: fontWeight ≥ 600 covers Semi Bold, Bold, Extra Bold, etc.
+      if (seg.fontWeight >= 600) {
+        styles.push('STRONG')
+      }
+      // Italic: check the fontName style string (e.g. "Italic", "Bold Italic")
+      if (seg.fontName.style.toLowerCase().includes('italic')) {
+        styles.push('EMPHASIS')
+      }
+      // Underline / Strikethrough from textDecoration
+      if (seg.textDecoration === 'UNDERLINE') {
+        styles.push('UNDERLINE')
+      }
+      if (seg.textDecoration === 'STRIKETHROUGH') {
+        styles.push('STRIKETHROUGH')
+      }
+
+      // --- Color ---
+      let color: string | undefined
+      if (seg.fills && seg.fills.length > 0) {
+        const fill = seg.fills[0]
+        if (fill.type === 'SOLID') {
+          const hex = rgbToHex(fill.color)
+          // Only include color if it's not default black
+          if (hex !== '#000000') {
+            color = hex
+          }
         }
       }
-    }
 
-    return richTextItem({
-      text,
-      size,
-      style: styles.length > 0 ? styles : undefined,
-      color,
+      return richTextItem({
+        text,
+        size,
+        style: styles.length > 0 ? styles : undefined,
+        color,
+      })
     })
-  })
+  } catch (_e) {
+    // Fallback: use plain text when getStyledTextSegments is unavailable
+    const text = node.characters || ''
+    items = [richTextItem({ text })]
+  }
 
   return richTextDisplayField({ items, marginAbove, marginBelow })
 }
