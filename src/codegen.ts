@@ -11,6 +11,7 @@ import { generateFrameSAIL } from './components/Frame'
 import { generateButtonArrayLayout } from './templates'
 
 export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResult> {
+  console.log('[Appian Way] generateSAILForNode — type:', node.type, '| name:', ('name' in node ? node.name : 'N/A'))
 
   // --- Instance nodes (component instances like Button) ---
   if (node.type === 'INSTANCE') {
@@ -29,10 +30,13 @@ export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResul
 
   // --- Text nodes → Rich Text Display Field ---
   if (node.type === 'TEXT') {
+    console.log('[Appian Way] TEXT branch hit for:', ('name' in node ? node.name : '???'))
     try {
-      return generateRichTextSAIL(node as TextNode)
+      const result = generateRichTextSAIL(node as TextNode)
+      console.log('[Appian Way] TEXT result length:', result.length)
+      return result
     } catch (_e) {
-      // Last-resort fallback: inline minimal SAIL so text is never silently lost
+      console.log('[Appian Way] TEXT fallback catch:', _e)
       const chars = String((node as TextNode).characters ?? '')
       return `a!richTextDisplayField(
   labelPosition: "COLLAPSED",
