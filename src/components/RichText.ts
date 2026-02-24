@@ -40,10 +40,19 @@ export function generateRichTextSAIL(
   let items: string[]
 
   try {
+    // Verify the API is available (not all sandbox modes expose it)
+    if (typeof node.getStyledTextSegments !== 'function') {
+      throw new Error('getStyledTextSegments not available')
+    }
+
     // Retrieve segments split by visual styling differences
     const segments = node.getStyledTextSegments(
       ['fontSize', 'fontName', 'fontWeight', 'textDecoration', 'fills']
     )
+
+    if (!segments || segments.length === 0) {
+      throw new Error('No segments returned')
+    }
 
     items = segments.map(seg => {
       const text = seg.characters

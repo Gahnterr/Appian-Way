@@ -29,7 +29,20 @@ export async function generateSAILForNode(node: BaseNode): Promise<SAILNodeResul
 
   // --- Text nodes → Rich Text Display Field ---
   if (node.type === 'TEXT') {
-    return generateRichTextSAIL(node)
+    try {
+      return generateRichTextSAIL(node as TextNode)
+    } catch (_e) {
+      // Last-resort fallback: inline minimal SAIL so text is never silently lost
+      const chars = String((node as TextNode).characters ?? '')
+      return `a!richTextDisplayField(
+  labelPosition: "COLLAPSED",
+  value: {
+    a!richTextItem(
+      text: "${chars.replace(/"/g, '\\"')}"
+    )
+  }
+)`
+    }
   }
 
   // --- Frame nodes → Card Layout / SideBySide / ButtonArray ---
