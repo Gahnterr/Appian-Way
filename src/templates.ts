@@ -49,18 +49,59 @@ export function buttonArrayLayout(props: {
 }
 
 // --- sideBySideItem ---
-export function sideBySideItem(props: { item: string }): string {
+export function sideBySideItem(props: { 
+  item: string,
+  width?: string
+}): string {
+  const sailProps: string[] = [`item: ${props.item}`]
+  if (props.width) sailProps.push(`width: "${props.width}"`)
   return `a!sideBySideItem(
-  item: ${props.item}
+  ${sailProps.join(',\n  ')}
 )`
 }
 
 // --- sideBySideLayout ---
-export function sideBySideLayout(props: { items: string[] }): string {
+export function sideBySideLayout(props: { 
+  items: string[],
+  spacing?: string,
+  alignVertical?: string
+}): string {
+  const sailProps: string[] = []
+  sailProps.push(`items: {\n${props.items.map(i => indentCode(i, 4)).join(',\n')}\n  }`)
+  if (props.spacing) sailProps.push(`spacing: "${props.spacing}"`)
+  if (props.alignVertical) sailProps.push(`alignVertical: "${props.alignVertical}"`)
   return `a!sideBySideLayout(
-  items: {
-${props.items.map(i => indentCode(i, 4)).join(',\n')}
+  ${sailProps.join(',\n  ')}
+)`
+}
+
+// --- columnLayout ---
+export function columnLayout(props: { 
+  contents: string[],
+  width?: string
+}): string {
+  const sailProps: string[] = []
+  if (props.contents && props.contents.length > 0) {
+    sailProps.push(`contents: {${props.contents.map(c => '\n' + indentCode(c, 4)).join(',')}\n  }`)
   }
+  if (props.width) sailProps.push(`width: "${props.width}"`)
+  return `a!columnLayout(
+  ${sailProps.join(',\n  ')}
+)`
+}
+
+// --- columnsLayout ---
+export function columnsLayout(props: { 
+  columns: string[],
+  spacing?: string,
+  alignVertical?: string
+}): string {
+  const sailProps: string[] = []
+  sailProps.push(`columns: {\n${props.columns.map(c => indentCode(c, 4)).join(',\n')}\n  }`)
+  if (props.spacing) sailProps.push(`spacing: "${props.spacing}"`)
+  if (props.alignVertical) sailProps.push(`alignVertical: "${props.alignVertical}"`)
+  return `a!columnsLayout(
+  ${sailProps.join(',\n  ')}
 )`
 }
 
@@ -87,6 +128,23 @@ export function richTextItem(props: {
   }
   if (props.color) sailProps.push(`color: "${props.color}"`)
   return `a!richTextItem(
+  ${sailProps.join(',\n  ')}
+)`
+}
+
+// --- richTextIcon ---
+export function richTextIcon(props: {
+  icon: string,
+  size?: string,
+  color?: string,
+  altText?: string,
+}): string {
+  const sailProps: string[] = []
+  sailProps.push(`icon: "${props.icon}"`)
+  if (props.size) sailProps.push(`size: "${props.size}"`)
+  if (props.color) sailProps.push(`color: "${props.color}"`)
+  if (props.altText) sailProps.push(`altText: "${props.altText.replace(/"/g, '\\"')}"`)
+  return `a!richTextIcon(
   ${sailProps.join(',\n  ')}
 )`
 }
@@ -141,15 +199,41 @@ export function cardLayout(props: {
 )`
 }
 
+// --- headingField ---
+export function headingField(props: {
+  text: string,
+  size?: string,
+  decoration?: string | string[],
+}): string {
+  const sailProps: string[] = []
+  sailProps.push(`text: "${props.text.replace(/"/g, '\\"')}"`)
+  if (props.size) sailProps.push(`size: "${props.size}"`)
+  if (props.decoration) {
+    if (Array.isArray(props.decoration)) {
+      if (props.decoration.length === 1) {
+        sailProps.push(`decoration: "${props.decoration[0]}"`)
+      } else {
+        sailProps.push(`decoration: { ${props.decoration.map(d => `"${d}"`).join(', ')} }`)
+      }
+    } else {
+      sailProps.push(`decoration: "${props.decoration}"`)
+    }
+  }
+  return `a!headingField(
+  ${sailProps.join(',\n  ')}
+)`
+}
+
 // --- imageField ---
 export function imageField(props: {
   altText?: string,
   size?: string,
 }): string {
   const sailProps: string[] = [
+    `labelPosition: "COLLAPSED"`,
     `images: {
     a!documentImage(
-      document: document("PLACEHOLDER_DOCUMENT_ID"),
+      document: a!EXAMPLE_DOCUMENT_IMAGE(),
       altText: "${(props.altText ?? 'image').replace(/"/g, '\\"')}"
     )
   }`

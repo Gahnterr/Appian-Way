@@ -40,7 +40,47 @@ export function isSideBySideLayoutCode(code: string): boolean {
   return /^\s*a!sideBySideLayout\s*\(/.test(code)
 }
 
+/** Check whether a generated SAIL string is a columnsLayout call */
+export function isColumnsLayoutCode(code: string): boolean {
+  return /^\s*a!columnsLayout\s*\(/.test(code)
+}
+
 /** Check whether a generated SAIL string is a cardLayout call */
 export function isCardLayoutCode(code: string): boolean {
   return /^\s*a!cardLayout\s*\(/.test(code)
+}
+
+/** 
+ * Extract the Appian property name from a variable name like "Spacing/Side By Side Layout - Dense"
+ * Returns simplified name like "DENSE" or null if not found
+ */
+export async function getVariableValueName(node: SceneNode, property: 'itemSpacing' | 'paddingTop' | 'paddingRight' | 'paddingBottom' | 'paddingLeft'): Promise<string | null> {
+  if (!('layoutMode' in node)) return null
+  
+  const boundVar = node.boundVariables?.[property]
+  if (!boundVar) return null
+  
+  const varId = Array.isArray(boundVar) ? boundVar[0]?.id : (boundVar as any)?.id
+  if (!varId) return null
+  
+  try {
+    const variable = await figma.variables.getVariableByIdAsync(varId)
+    if (!variable) return null
+    
+    // Extract from patterns like "Spacing/Side By Side Layout - Dense" → "DENSE"
+    const parts = variable.name.split(' - ')
+    if (parts.length > 1) {
+      return parts[1].toUpperCase().replace(/\s+/g, '_')
+    }
+    
+    // Or from "Spacing/Dense" → "DENSE"
+    const slashParts = variable.name.split('/')
+    if (slashParts.length > 1) {
+      return slashParts[1].toUpperCase().replace(/\s+/g, '_')
+    }
+    
+    return null
+  } catch {
+    return null
+  }
 }
