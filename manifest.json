@@ -10,7 +10,8 @@
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
   "editorType": [
-    "dev"
+    "dev",
+    "figma"
   ],
   "ui": "ui.html",
   "codegenLanguages": [
@@ -19,9 +20,16 @@
       "value": "javascript"
     }
   ],
+  "codegenPreferences": [
+    {
+      "itemType": "action",
+      "propertyName": "openPanel",
+      "label": "Open Appian Way panel"
+    }
+  ],
   "networkAccess": {
     "allowedDomains": [
-      "none"
+      "https://nnu98ocf1l.execute-api.us-east-1.amazonaws.com"
     ]
   }
 }
