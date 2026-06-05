@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "lib": ["es6"],
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "lib": ["es2020"],
     "strict": true,
     "esModuleInterop": true,
+    "rootDir": "./src",
     "outDir": "./dist",
     "typeRoots": [
       "./node_modules/@types",

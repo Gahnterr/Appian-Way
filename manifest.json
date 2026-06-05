@@ -16,8 +16,8 @@
   "ui": "ui.html",
   "codegenLanguages": [
     {
-      "label": "SAIL",
-      "value": "javascript"
+      "label": "Plain Text",
+      "value": "plaintext"
     }
   ],
   "codegenPreferences": [
