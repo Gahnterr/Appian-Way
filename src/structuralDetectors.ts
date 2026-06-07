@@ -1,9 +1,5 @@
 import { getMainComponentName } from "./getMainComponentName"
 
-const hasNoChildren = (child: SceneNode): boolean => {
-    return !('children' in child) || child.children.length === 0
-}
-
 export const isButtonArrayFrame = async (frame: FrameNode): Promise<boolean> => {
     if (frame.children.length === 0) return false
 
@@ -12,6 +8,19 @@ export const isButtonArrayFrame = async (frame: FrameNode): Promise<boolean> => 
         if (await getMainComponentName(child, 'COMPONENT_SET') !== 'Button') return false
     }
     return true
+}
+
+export const isRichTextIcon = async (node: SceneNode): Promise<boolean> => {
+    if (node.type !== 'INSTANCE') return false
+    const mainComponentName = await getMainComponentName(node, 'COMPONENT')
+    return mainComponentName !== null && /^[a-z0-9-]+$/.test(mainComponentName)
+}
+
+export const isRichTextDisplayFieldFrame = async (frame: FrameNode): Promise<boolean> => {
+    const childMatches = await Promise.all(
+        frame.children.map(async child => child.type === 'TEXT' || await isRichTextIcon(child))
+    )
+    return childMatches.every(childMatches => childMatches)
 }
 
 export const isCardLayoutFrame = (frame: FrameNode): boolean => {
@@ -24,7 +33,4 @@ export const isSideBySideFrame = (frame: FrameNode): boolean => {
     return false
 }
 
-export const isColumnLayoutFrame = (frame: FrameNode): boolean => {
-    if ( frame.layoutMode === 'HORIZONTAL' && frame.children.length > 1) return true
-    return false
-}
+export const isColumnsLayoutFrame = (frame: FrameNode): boolean => frame.layoutMode === 'GRID'

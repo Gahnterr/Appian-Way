@@ -246,3 +246,49 @@ export const mapToSAILSideBySideLayoutItemSpacing = (figmaItemSpacing: number): 
     if (figmaItemSpacing <= 10) return 'STANDARD'
     else return 'SPARSE'
 }
+
+export type SAILRichTextIconSize = 'STANDARD' | 'SMALL' | 'MEDIUM' | 'MEDIUM_PLUS' | 'LARGE' | 'LARGE_PLUS' | 'EXTRA_LARGE'
+export const mapToSAILRichTextIconSize = (figmaIconWidth: number): SAILRichTextIconSize => {
+    if (figmaIconWidth <= 12) return 'SMALL'
+    if (figmaIconWidth <= 14) return 'STANDARD'
+    if (figmaIconWidth <= 17) return 'MEDIUM'
+    if (figmaIconWidth <= 24) return 'MEDIUM_PLUS'
+    if (figmaIconWidth <= 32) return 'LARGE'
+    if (figmaIconWidth <= 52) return 'LARGE_PLUS'
+    return 'EXTRA_LARGE'
+}
+
+export type SAILParagraphHeight = 'SHORT' | 'MEDIUM' | 'TALL'
+export type SAILChoiceLayout = 'STACKED' | 'COMPACT'
+export type SAILChoiceStyle = 'STANDARD' | 'CARDS'
+export type SAILChoiceSpacing = 'STANDARD' | 'MORE' | 'EVEN_MORE'
+export type SAILChoicePosition = 'START' | 'END'
+export type SAILDropdownSearchDisplay = 'AUTO' | 'ON' | 'OFF'
+
+export type SAILColumnWidth = 'AUTO' | 'EXTRA_NARROW' | 'NARROW' | 'NARROW_PLUS' | 'MEDIUM' | 'MEDIUM_PLUS' | 'WIDE' | 'WIDE_PLUS' | '1X' | '2X' | '3X' | '4X' | '5X' | '6X' | '7X' | '8X' | '9X' | '10X'
+export const mapToSAILColumnWidth = (gridColumnTrack: GridTrackSize): SAILColumnWidth => {
+    if (gridColumnTrack.type === 'FLEX') {
+        const fractionalUnits = Math.min(Math.max(Math.round(gridColumnTrack.value ?? 1), 1), 10)
+        return `${fractionalUnits}X` as SAILColumnWidth
+    }
+    if (gridColumnTrack.type === 'HUG') return 'AUTO'
+
+    const widthInPixels = gridColumnTrack.value ?? 0
+    if (widthInPixels <= 60) return 'EXTRA_NARROW'
+    if (widthInPixels <= 220) return 'NARROW'
+    if (widthInPixels <= 300) return 'NARROW_PLUS'
+    if (widthInPixels <= 380) return 'MEDIUM'
+    if (widthInPixels <= 540) return 'MEDIUM_PLUS'
+    if (widthInPixels <= 780) return 'WIDE'
+    return 'WIDE_PLUS'
+}
+
+export type SAILColumnsLayoutSpacing = 'NONE' | 'DENSE' | 'STANDARD' | 'SPARSE'
+export const mapToSAILColumnsLayoutSpacing = (gridColumnGap: number): SAILColumnsLayoutSpacing => {
+    if (gridColumnGap === 0) return 'NONE'
+    if (gridColumnGap <= 3) return 'DENSE'
+    if (gridColumnGap <= 10) return 'STANDARD'
+    return 'SPARSE'
+}
+
+export type SAILColumnsLayoutAlignVertical = 'TOP' | 'MIDDLE' | 'BOTTOM'

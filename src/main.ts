@@ -2,9 +2,10 @@
 import { indentStringArray } from "./indent"
 import { generateButtonArrayLayout, generateButtonWidget } from "./SAILComponents/ButtonArrayLayout"
 import { generateCardLayout } from "./SAILComponents/CardLayout"
+import { generateColumnsLayout } from "./SAILComponents/ColumnsLayout"
 import { generateRichTextDisplayField } from "./SAILComponents/RichTextDisplayField"
 import { generateSideBySideLayout } from "./SAILComponents/SideBySideLayout"
-import { isButtonArrayFrame, isCardLayoutFrame, isSideBySideFrame } from "./structuralDetectors"
+import { isButtonArrayFrame, isCardLayoutFrame, isColumnsLayoutFrame, isRichTextDisplayFieldFrame, isSideBySideFrame } from "./structuralDetectors"
 
 if (figma.mode === 'codegen') {
   figma.codegen.on('preferenceschange', async (event) => {
@@ -40,6 +41,14 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
     case 'FRAME': {
       if (await isButtonArrayFrame(currentNode)) {
         code.push(...indentStringArray(await generateButtonArrayLayout(currentNode), nestingLevel))
+      } else if (isColumnsLayoutFrame(currentNode)) {
+        const childrenCode: string[][] = []
+        for (const child of currentNode.children) {
+          childrenCode.push(await generateSAILFromNode(child, nestingLevel))
+        }
+        code.push(...indentStringArray(generateColumnsLayout(currentNode, childrenCode), nestingLevel))
+      } else if (await isRichTextDisplayFieldFrame(currentNode)) {
+        code.push(...indentStringArray(await generateRichTextDisplayField(currentNode), nestingLevel))
       } else if (isCardLayoutFrame(currentNode)) {
         const childrenCode: string[] = []
         for (const child of currentNode.children) {
@@ -58,7 +67,7 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
       break
     }
     case 'TEXT':
-      code.push(...indentStringArray(generateRichTextDisplayField(currentNode), nestingLevel)); break
+      code.push(...indentStringArray(await generateRichTextDisplayField(currentNode), nestingLevel)); break
     case 'INSTANCE': {
       const mainComponent = await currentNode.getMainComponentAsync()
       if (!mainComponent) {
