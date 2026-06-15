@@ -1,6 +1,6 @@
-import { SAILLabelPosition, SAILMargin, SAILTextAlign } from "./SAILParameters"
+import { SAILLabelPosition, SAILMargin, SAILTextAlign } from "../SAILParameters"
 
-export type TextField = {
+export type DateField = {
     label?: string
     labelPosition?: SAILLabelPosition
     instructions?: string
@@ -8,17 +8,15 @@ export type TextField = {
     disabled?: boolean
     readOnly?: boolean
     value?: string
-    placeholder?: string
     align?: SAILTextAlign
-    characterLimit?: number
     helpTooltip?: string
     marginAbove?: SAILMargin
     marginBelow?: SAILMargin
 }
-export const TextField = ({ label, labelPosition, instructions, required, disabled, readOnly, value, placeholder, align, characterLimit, helpTooltip, marginAbove, marginBelow }: TextField): string[] => {
+export const DateField = ({ label, labelPosition, instructions, required, disabled, readOnly, value, align, helpTooltip, marginAbove, marginBelow }: DateField): string[] => {
     const code: string[] = []
 
-    code.push(`a!textField(`)
+    code.push(`a!dateField(`)
     if (label) code.push(`  label: "${label}",`)
     if (labelPosition) code.push(`  labelPosition: "${labelPosition}",`)
     if (instructions) code.push(`  instructions: "${instructions}",`)
@@ -26,9 +24,7 @@ export const TextField = ({ label, labelPosition, instructions, required, disabl
     if (disabled) code.push(`  disabled: ${disabled},`)
     if (readOnly) code.push(`  readOnly: ${readOnly},`)
     if (value) code.push(`  value: "${value}",`)
-    if (placeholder) code.push(`  placeholder: "${placeholder}",`)
     if (align) code.push(`  align: "${align}",`)
-    if (characterLimit) code.push(`  characterLimit: ${characterLimit},`)
     if (helpTooltip) code.push(`  helpTooltip: "${helpTooltip}",`)
     if (marginAbove) code.push(`  marginAbove: "${marginAbove}",`)
     if (marginBelow) code.push(`  marginBelow: "${marginBelow}",`)

@@ -1,7 +1,7 @@
-import { getAppliedModes } from "../getAppliedModes"
-import { getMainComponentName } from "../getMainComponentName"
-import { indentStringArray } from "../indent"
-import { mapToSAILButtonArrayLayoutAlign, mapToSAILButtonColor, mapToSAILButtonIconPosition, mapToSAILButtonSize, mapToSAILButtonStyle, mapToSAILMargin, SAILButtonArrayLayoutAlign, SAILButtonColor, SAILButtonIconPosition, SAILButtonSize, SAILButtonStyle, SAILButtonWidth, SAILMargin } from "./SAILParameters"
+import { getAppliedModes } from "../../Utilities/getAppliedModes"
+import { __getMainComponentName } from "../../Utilities/getMainComponentName"
+import { indentStringArray } from "../../Utilities/indent"
+import { mapToSAILButtonArrayLayoutAlign, mapToSAILButtonColor, mapToSAILButtonIconPosition, mapToSAILButtonSize, mapToSAILButtonStyle, mapToSAILMargin, SAILButtonArrayLayoutAlign, SAILButtonColor, SAILButtonIconPosition, SAILButtonSize, SAILButtonStyle, SAILButtonWidth, SAILMargin } from "../SAILParameters"
 
 type ButtonWidget = {
     label?: string,
@@ -35,7 +35,7 @@ const ButtonWidget = ({ label, style, disabled, size, width, icon, tooltip, icon
 export const generateButtonWidget = async (instanceNode: InstanceNode): Promise<string[]> => {
     let label: string = ''
     const appliedModes = await getAppliedModes(instanceNode)
-    const disabled: boolean = instanceNode.componentProperties['State'].value  === 'Disabled'
+    const disabled: boolean = instanceNode.componentProperties['State'].value === 'Disabled'
     const getIconName = async (id: string): Promise<string> => {
         const iconNode = await figma.getNodeByIdAsync(id)
         return iconNode ? iconNode.name : ''
@@ -44,16 +44,16 @@ export const generateButtonWidget = async (instanceNode: InstanceNode): Promise<
     let iconPosition: SAILButtonIconPosition | undefined
     const iconPositionProp: string = instanceNode.componentProperties['Icon Position'].value as string
     const iconNameProp: string = instanceNode.componentProperties['Icon#614:0'].value as string
-    if (iconPositionProp === 'Left' || 
-        iconPositionProp === 'Right' || 
+    if (iconPositionProp === 'Left' ||
+        iconPositionProp === 'Right' ||
         iconPositionProp === 'Icon Only') {
         icon = await getIconName(iconNameProp)
         iconPosition = await mapToSAILButtonIconPosition(iconPositionProp)
-    } 
+    }
     if (iconPositionProp === 'Left' ||
         iconPositionProp === 'Right' ||
         iconPositionProp === 'Text Only') {
-            label = instanceNode.componentProperties['Label#614:146'].value as string
+        label = instanceNode.componentProperties['Label#614:146'].value as string
     }
     const style: SAILButtonStyle = mapToSAILButtonStyle(appliedModes['Btn Style'])
     const size: SAILButtonSize = mapToSAILButtonSize(appliedModes['Btn Size'])
@@ -90,15 +90,28 @@ export const ButtonArrayLayout = ({ buttons, align, marginBelow = 'NONE' }: Butt
 
     return code
 }
-export const generateButtonArrayLayout = async (node: FrameNode): Promise<string[]> => {
+
+export const isButtonArrayFrame = async (frameNode: FrameNode): Promise<boolean> => {
+    if (frameNode.layoutMode !== 'HORIZONTAL' || frameNode.children.length === 0) return false
+    for (const child of frameNode.children) {
+        if (child.type !== 'INSTANCE' || await __getMainComponentName(child, 'COMPONENT_SET') !== 'Button') return false
+    }
+    return true
+}
+
+export const generateButtonArrayLayout = async (node: FrameNode | InstanceNode): Promise<string[]> => {
     const code: string[] = []
     const buttons: string[] = []
-    const align = mapToSAILButtonArrayLayoutAlign(node.primaryAxisAlignItems)
-    const marginBelow = mapToSAILMargin(node.paddingBottom)
+    const align = node.type === 'FRAME' ? mapToSAILButtonArrayLayoutAlign(node.primaryAxisAlignItems) : 'START'
+    const marginBelow = node.type === 'FRAME' ? mapToSAILMargin(node.paddingBottom) : 'NONE'
 
-    for (const button of node.children) {
-        if (button.type === 'INSTANCE' && await getMainComponentName(button, 'COMPONENT_SET') === 'Button') {
-            buttons.push(...await generateButtonWidget(button))
+    if (node.type === 'INSTANCE') {
+        buttons.push(...await generateButtonWidget(node))
+    } else {
+        for (const button of node.children) {
+            if (button.type === 'INSTANCE' && await __getMainComponentName(button, 'COMPONENT_SET') === 'Button') {
+                buttons.push(...await generateButtonWidget(button))
+            }
         }
     }
 
@@ -108,6 +121,6 @@ export const generateButtonArrayLayout = async (node: FrameNode): Promise<string
     code.push(`  buttons: {`)
     code.push(...indentStringArray(buttons, 2))
     code.push(`  },`)
-    code.push(`)`)
+    code.push(`),`)
     return code
 }
