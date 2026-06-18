@@ -1,3 +1,4 @@
+import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
@@ -53,16 +54,16 @@ export const generateTextField = async (instanceNode: InstanceNode): Promise<str
     }
 
     return TextField({
-        label: props['Label'].value as string,
-        labelPosition: mapToSAILLabelPosition(props['Label Position'].value as string),
-        value: props['Has Value'].value ? props['Value'].value as string : undefined,
-        placeholder: props['Placeholder'].value as string,
+        label: stringProp(props['Label'].value),
+        labelPosition: mapToSAILLabelPosition(stringProp(props['Label Position'].value)),
+        value: booleanProp(props['Has Value'].value) ? stringProp(props['Value'].value) : undefined,
+        placeholder: stringProp(props['Placeholder'].value),
         readOnly: props['Is Read Only'].value === 'True',
         marginAbove: mapToSAILMargin(modes['Margin Above']),
         marginBelow: mapToSAILMargin(modes['Margin Below']),
-        required: props['Is Required'].value as boolean,
-        requiredMessage: props['Required Message'].value as string,
-        instructions: props['Show Instructions'].value as boolean ? props['Instructions'].value as string : undefined,
+        required: booleanProp(props['Is Required'].value),
+        requiredMessage: stringProp(props['Required Message'].value),
+        instructions: booleanProp(props['Show Instructions'].value) ? stringProp(props['Instructions'].value) : undefined,
         align,
         disabled: modes['State'] === 'Disabled'
     })

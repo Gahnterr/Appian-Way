@@ -126,13 +126,15 @@ export const generateSingleRichTextIcon = async (instanceNode: InstanceNode): Pr
 }
 
 export const generateRichTextDisplayField = async (node: TextNode | FrameNode): Promise<string[]> => {
-    const childNodes: readonly SceneNode[] = node.type === 'TEXT' ? [node] : node.children
+    const children: readonly SceneNode[] = node.type === 'TEXT' ? [node] : node.children
     const richTextValues: (RichTextItem | RichTextIcon)[] = []
     let align: SAILTextAlign = 'LEFT'
     let alignResolved = false
     let preventWrapping = false
+    let marginAbove: SAILMargin = 'NONE'
     let marginBelow: SAILMargin = 'NONE'
-    if (node.type === 'FRAME' && node.layoutMode === 'VERTICAL') {
+    if (node.type === 'FRAME') {
+        marginAbove = mapToSAILMargin(node.paddingTop)
         marginBelow = mapToSAILMargin(node.itemSpacing)
     }
     const addGap = () => {
@@ -144,22 +146,21 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
             }
         }
     }
-
     
-    for (const childNode of childNodes) {
-        if (childNode.type === 'TEXT') {
+    for (const child of children) {
+        if (child.type === 'TEXT') {
             if (!alignResolved) {
-                align = mapToSAILTextAlign(childNode.textAlignHorizontal)
+                align = mapToSAILTextAlign(child.textAlignHorizontal)
                 alignResolved = true
             }
-            preventWrapping = childNode.textTruncation === 'ENDING'
+            preventWrapping = child.textTruncation === 'ENDING'
 
-            generateTextSegments(childNode)
-        } else if (childNode.type === 'INSTANCE') {
-            richTextValues.push(await generateRichTextIcon(childNode))
-        } else if (childNode.type === 'FRAME') {
-            const firstChild = childNode.children[0]
-            if (childNode.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
+            generateTextSegments(child)
+        } else if (child.type === 'INSTANCE') {
+            richTextValues.push(await generateRichTextIcon(child))
+        } else if (child.type === 'FRAME') {
+            const firstChild = child.children[0]
+            if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
                 richTextValues.push(await generateRichTextIcon(firstChild))
                 addGap()
             }
@@ -200,6 +201,7 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
         align: align,
         preventWrapping: preventWrapping,
         value: richTextValues,
+        marginAbove,
         marginBelow
     })
 }
@@ -215,11 +217,17 @@ export const isRichTextIcon = async (node: SceneNode): Promise<boolean> => {
 }
 
 export const isRichTextDisplayFieldFrame = async (frameNode: FrameNode): Promise<boolean> => {
-    if (frameNode.fills || frameNode.strokes) return false
+    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0) return false
+    if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
 
     const validChildrenComponents = await Promise.all(
-        frameNode.children.map(async child => isRichTextDisplayFieldFrame || await isRichTextIcon(child))
+        frameNode.children.map(async child => {
+            if (child.type === 'TEXT') return true
+            if (child.type === 'INSTANCE') return await isRichTextIcon(child)
+            if (child.type === 'FRAME') return await isRichTextDisplayFieldFrame(child)
+            return false
+        })
     )
 
-    return validChildrenComponents.every(childMatches => childMatches)
+    return validChildrenComponents.every(Boolean)
 }

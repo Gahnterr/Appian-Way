@@ -2,13 +2,14 @@ import { indentStringArray } from "../../Utilities/indent"
 import { isButtonArrayFrame } from "../Action/ButtonArrayLayout"
 import { mapToSAILMargin, mapToSAILSideBySideItemWidth, mapToSAILSideBySideLayoutAlignVertical, mapToSAILSideBySideLayoutItemSpacing, SAILMargin, SAILSideBySideItemWidth, SAILSideBySideLayoutAlignVertical, SAILSideBySideLayoutItemSpacing } from "../SAILParameters"
 import { isStampFieldInstance } from "../Display/StampField"
-import { isRichTextDisplayFieldFrame } from "../Display/RichTextDisplayField"
+import { isRichTextDisplayFieldFrame, isRichTextIcon } from "../Display/RichTextDisplayField"
 import { isParagraphFieldInstance } from "../Inputs/ParagraphField"
 import { isTextFieldInstance } from "../Inputs/TextField"
 import { isDropdownFieldInstance } from "../Selection/DropdownField"
 import { isBooleanCheckboxFieldInstance } from "../Selection/BooleanCheckboxField"
 import { isRadioButtonFieldInstance } from "../Selection/RadioButtonField"
 import { isImageField } from "../Display/ImageField"
+import { isHorizontalLineInstance } from "../Display/HorizontalLine"
 
 type SideBySideItem = {
     item: string[]
@@ -65,20 +66,35 @@ export const generateSideBySideLayout = (frameNode: FrameNode, childrenCode: str
 }
 
 export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boolean> => {
-    if (frameNode.layoutMode !== 'HORIZONTAL' || (frameNode.fills || frameNode.strokes)) return false
+    if (frameNode.layoutMode !== 'HORIZONTAL') return false
+    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0) return false
+    if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
 
-    return frameNode.children.every(async child =>
-    (child.type === 'FRAME'
-        && (await isSideBySideLayoutFrame(child)
-            || await isRichTextDisplayFieldFrame(child)
-            || await isButtonArrayFrame(child)
-            || isImageField(child)
-        ) || (child.type === 'INSTANCE' && (await isStampFieldInstance(child)
-            || await isTextFieldInstance(child)
-            || await isParagraphFieldInstance(child)
-            || await isDropdownFieldInstance(child)
-            || await isBooleanCheckboxFieldInstance(child)
-            || await isRadioButtonFieldInstance(child)
-        ))
-    ))
+    for (const child of frameNode.children) {
+        return await isLayoutFrame(child) || await isKnownComponentInstance(child) 
+    }
+
+    return true
+}
+
+const isLayoutFrame = async (node: SceneNode): Promise<boolean> => {
+    if (node.type === 'FRAME') return  await isSideBySideLayoutFrame(node)
+        || await isRichTextDisplayFieldFrame(node)
+        || await isButtonArrayFrame(node)
+        || isImageField(node)
+
+    return false
+}
+
+const isKnownComponentInstance = async (node: SceneNode): Promise<boolean> => {
+    if (node.type === 'INSTANCE') return await isStampFieldInstance(node)
+        || await isTextFieldInstance(node)
+        || await isParagraphFieldInstance(node)
+        || await isDropdownFieldInstance(node)
+        || await isBooleanCheckboxFieldInstance(node)
+        || await isRadioButtonFieldInstance(node)
+        || await isRichTextIcon(node)
+        || await isHorizontalLineInstance(node)
+
+    return false
 }

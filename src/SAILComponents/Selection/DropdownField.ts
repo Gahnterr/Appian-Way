@@ -1,10 +1,9 @@
 import { stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
-import { getComponentSlot, getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
-import { SAILLabelPosition, SAILDropdownSearchDisplay, SAILMargin, mapToSAILChoiceLayout, mapToSAILChoicePosition, mapToSAILChoiceSpacing, mapToSAILChoiceStyle, mapToSAILLabelPosition, mapToSAILMargin } from "../SAILParameters"
+import { SAILLabelPosition, SAILDropdownSearchDisplay, SAILMargin, mapToSAILLabelPosition, mapToSAILMargin } from "../SAILParameters"
 
 export type DropdownField = {
     label?: string

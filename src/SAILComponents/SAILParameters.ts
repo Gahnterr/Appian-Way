@@ -37,13 +37,12 @@ export const mapToSAILTextAlign = (figmaTextAlignHorizontal: string): SAILTextAl
 export type SAILLabelPosition = 'ABOVE' | 'ADJACENT' | 'COLLAPSED' | 'JUSTIFIED'
 export const mapToSAILLabelPosition = (figmaLabelPosition: string): SAILLabelPosition => {
     switch (figmaLabelPosition) {
-        case 'Above': return 'ABOVE'; break
-        case 'Adjacent': return 'ADJACENT'; break
-        case 'Collapsed': return 'COLLAPSED'; break
-        case 'Justified': return 'JUSTIFIED'; break
-        default: return 'COLLAPSED'; break
+        case 'Above': return 'ABOVE'
+        case 'Adjacent': return 'ADJACENT'
+        case 'Collapsed': return 'COLLAPSED'
+        case 'Justified': return 'JUSTIFIED'
+        default: return 'COLLAPSED'
     }
-    return 'COLLAPSED'
 }
 
 export type SAILMargin = "NONE" | "EVEN_LESS" | "LESS" | "STANDARD" | "MORE" | "EVEN_MORE"

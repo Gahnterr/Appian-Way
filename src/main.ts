@@ -1,4 +1,5 @@
 import { generateButtonArrayLayout, isButtonArrayFrame } from "./SAILComponents/Action/ButtonArrayLayout"
+import { generateHorizontalLine } from "./SAILComponents/Display/HorizontalLine"
 import { generateImageField, isImageField } from "./SAILComponents/Display/ImageField"
 import { generateRichTextDisplayField, generateSingleRichTextIcon, isRichTextDisplayFieldFrame } from "./SAILComponents/Display/RichTextDisplayField"
 import { generateStampField } from "./SAILComponents/Display/StampField"
@@ -103,6 +104,9 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       case 'Boolean Check Box':
         addToCode(await generateBooleanCheckboxField(currentNode))
         break
+      case 'Horizontal Line': 
+        addToCode(await generateHorizontalLine(currentNode))
+        break
       case 'Card Layout': {
         const contentsSlot = currentNode.findOne(node => node.name === 'Contents')
         if (!contentsSlot || contentsSlot.type !== 'SLOT') {
@@ -149,11 +153,7 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
     } else {
       for (const child of currentNode.children) {
         const columnContents: string[] = []
-        if ('children' in child) {
-          for (const grandChild of child.children) {
-            columnContents.push(...await generateSAILFromNode(grandChild, nestingLevel))
-          }
-        }
+        columnContents.push(...await generateSAILFromNode(child, nestingLevel))
         childrenCode.push(columnContents)
       }
     }

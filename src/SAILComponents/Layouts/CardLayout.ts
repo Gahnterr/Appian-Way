@@ -111,8 +111,13 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
 }
 
 export const isCardLayoutFrame = async (node: FrameNode | InstanceNode): Promise<boolean> => {
-    if (node.type === 'FRAME' && (node.fills || node.strokes)) return true
     if (node.type === 'INSTANCE') return await getMainComponentName(node) === 'Card Layout'
-    if (node.layoutMode === 'VERTICAL' || (node.fills && node.strokes)) return true
+
+    if (node.type === 'FRAME') {
+        if (Array.isArray(node.fills) && node.fills.length > 0) return true
+        if (Array.isArray(node.strokes) && node.strokes.length > 0) return true
+        if (node.layoutMode === 'VERTICAL') return true
+    }
+
     return false
 }
