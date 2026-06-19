@@ -44,3 +44,7 @@ export const toHexColor = (r: number, g: number, b: number, a?: number): string 
 
     return convertedHexString
 }
+
+export const RGBAToHexColor = (color: RGBA): string => {
+    return toHexColor(color.r, color.g, color.b, color.a)
+}

@@ -18,6 +18,12 @@ export const isInstanceNodesArray = (node: SceneNode[]): node is InstanceNode[] 
     && node !== undefined
 }
 
+export const isLineNode = (node: SceneNode): node is LineNode => {
+    return node?.type === 'LINE'
+    && node !== null 
+    && node !== undefined
+}
+
 export const isString = (param: unknown): param is string => {
     return (typeof param === 'string')
 }

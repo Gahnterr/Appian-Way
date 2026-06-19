@@ -33,7 +33,7 @@ export const RadioButtonField = ({ label, labelPosition, instructions, required,
     if (disabled) code.push(`  disabled: ${disabled},`)
     if (choiceLabels) code.push(`  choiceLabels: { ${choiceLabels.map(choiceLabel => `"${choiceLabel}"`).join(', ')} },`)
     if (choiceValues) code.push(`  choiceValues: { ${choiceValues.join(', ')} },`)
-    if (value) code.push(`  value: "${value}",`)
+    if (value !== undefined) code.push(`  value: ${value},`)
     if (choiceLayout) code.push(`  choiceLayout: "${choiceLayout}",`)
     if (choiceStyle) code.push(`  choiceStyle: "${choiceStyle}",`)
     if (choicePosition) code.push(`  choicePosition: "${choicePosition}",`)
