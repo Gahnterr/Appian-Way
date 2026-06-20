@@ -1609,5 +1609,4 @@ const iconNames = [
 ] as const
 
 export type SAILIcon = typeof iconNames[number]
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isSAILIcon = (item: any): item is SAILIcon => iconNames.includes(item)
+export const isSAILIcon = (value: unknown): value is SAILIcon => iconNames.some((icon) => icon === value)

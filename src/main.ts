@@ -7,6 +7,7 @@ import { generateParagraphField } from "./SAILComponents/Inputs/ParagraphField"
 import { generateTextField } from "./SAILComponents/Inputs/TextField"
 import { generateCardLayout, isCardLayoutFrame } from "./SAILComponents/Layouts/CardLayout"
 import { generateColumnsLayout, isColumnsLayoutFrame } from "./SAILComponents/Layouts/ColumnsLayout"
+import { generateSectionLayout } from "./SAILComponents/Layouts/SectionLayout"
 import { generateSideBySideLayout, isSideBySideLayoutFrame } from "./SAILComponents/Layouts/SideBySideLayout"
 import { isSAILIcon } from "./SAILComponents/SAILParameters"
 import { generateBooleanCheckboxField } from "./SAILComponents/Selection/BooleanCheckboxField"
@@ -107,6 +108,19 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       case 'Horizontal Line': 
         addToCode(await generateHorizontalLine(currentNode))
         break
+      case 'Section': {
+        const contentsSlot = getContentsSlotNodeFrom(currentNode, code)
+        if (!contentsSlot) break
+
+        const childrenCode: string[] = []
+
+        for (const child of contentsSlot.children) {
+          childrenCode.push(...await generateSAILFromNode(child, nestingLevel))
+        }
+
+        code.push(...indentStringArray(await generateSectionLayout(currentNode, childrenCode), nestingLevel))
+        break
+      }
       case 'Card Layout': {
         const contentsSlot = currentNode.findOne(node => node.name === 'Contents')
         if (!contentsSlot || contentsSlot.type !== 'SLOT') {
@@ -172,3 +186,10 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
   } else code.push(`/* This frame is not recognized as a supported SAIL component. */`)
 }
 
+function getContentsSlotNodeFrom(node: InstanceNode, code: string[]): SlotNode | undefined {
+  const contentsSlot = node.findOne(n => n.name === 'Contents' && n.type === 'SLOT')
+  if (!contentsSlot || contentsSlot.type !== 'SLOT') {
+    code.push(`/* Section Layout instance has no 'Contents' slot. */`)
+    return undefined
+  } else return contentsSlot
+}

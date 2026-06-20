@@ -7,19 +7,16 @@ import { RGBAToHexColor, toHexColor } from "../../Utilities/rgbColorToHexColor"
 import { mapToSAILMargin, SAILMargin } from "../SAILParameters"
 
 type SAILHorizontalLineColor = 'SECONDARY' | 'STANDARD' | 'ACCENT' | string
-const mapToSAILHorizontalLineColor = (instanceNode: InstanceNode): SAILHorizontalLineColor => {
-    const lineNode = instanceNode.findChild(child => child.type === 'LINE')
-    let strokeColor: string
-    if (lineNode && isLineNode(lineNode)) {
-        strokeColor = RGBAToHexColor(getLastStrokeFromNode(lineNode))
-        switch (strokeColor) {
-            case '#D4D4D4': return 'SECONDARY'
-            case '#222222': return 'STANDARD'
-            case '#A3239E': return 'ACCENT'
-            default: break
-        }
+const mapToSAILHorizontalLineColor = (strokeColor: RGB): SAILHorizontalLineColor => {
+    const hexColor = toHexColor(strokeColor.r, strokeColor.g, strokeColor.b)
+    switch (hexColor) {
+        case '#D4D4D4': return 'SECONDARY'
+        case '#222222': return 'STANDARD'
+        case '#A3239E': return 'ACCENT'
+        default: break
     }
-    return strokeColor = '#FF00FF'
+
+    return hexColor
 }
 
 type SAILHorizontalWeight = 'THIN' | 'MEDIUM' | 'THICK'
@@ -61,7 +58,7 @@ type HorizontalLineProps = {
     style: SAILHorizontalLineStyle
 }
 
-const HorizontalLine = ({ color, weight, marginAbove, marginBelow, style }:HorizontalLineProps): string[] => {
+const HorizontalLine = ({ color, weight, marginAbove, marginBelow, style }: HorizontalLineProps): string[] => {
     const code: string[] = []
 
     code.push(`a!horizontalLine(`)
@@ -79,8 +76,11 @@ export const generateHorizontalLine = async (instanceNode: InstanceNode): Promis
     const modes = await getAppliedModes(instanceNode)
     const props = getComponentProps(instanceNode)
 
+    const lineNode = instanceNode.children[0].type === 'LINE' ? instanceNode.children[0] : undefined
+    const lineStrokeColor = getLastStrokeFromNode(lineNode)
+
     return HorizontalLine({
-        color: mapToSAILHorizontalLineColor(instanceNode),
+        color: mapToSAILHorizontalLineColor(lineStrokeColor),
         weight: mapToSAILHorizontalWeight(stringProp(props['Weight'].value), instanceNode),
         marginAbove: mapToSAILMargin(modes['Margin Above']),
         marginBelow: mapToSAILMargin(modes['Margin Below']),

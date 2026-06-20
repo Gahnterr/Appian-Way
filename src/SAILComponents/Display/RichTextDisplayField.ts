@@ -197,7 +197,6 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
     }
 
     return RichTextDisplayField({
-        label: node.name,
         align: align,
         preventWrapping: preventWrapping,
         value: richTextValues,

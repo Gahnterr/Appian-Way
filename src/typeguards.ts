@@ -1,3 +1,5 @@
+import { SAILIcon } from "./SAILComponents/SAILParameters"
+
 export const isSlotNodesArray = (node: SceneNode[]): node is SlotNode[] => {
     return Array.isArray(node)
         && node.every(n => n.type === 'SLOT')

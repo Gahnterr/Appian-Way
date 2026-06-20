@@ -29,8 +29,12 @@ export const toHexColor = (r: number, g: number, b: number, a?: number): string 
     }
 
     let colorValues: number[]
-    if (a !== undefined && a >= 0 && a < 1) colorValues = [r, g, b, a]
-    else colorValues = [r, g, b]
+    if (a !== undefined && a >= 0 && a <= 1) {
+        colorValues = [r, g, b, a]
+    }
+    else {
+        colorValues = [r, g, b]
+    }
 
     for (const colorValue of colorValues) {
         if (colorValue >= 0 && colorValue <= 1) {
