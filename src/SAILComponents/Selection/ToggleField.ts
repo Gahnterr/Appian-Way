@@ -5,7 +5,7 @@ import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue as getHelpTooltipValue } from "../../Utilities/getTooltipValue"
 import { mapToSAILChoicePosition, mapToSAILMargin, SAILChoicePosition, SAILMargin } from "../SAILParameters"
 
-type BooleanCheckboxProps = {
+type ToggleFieldProps = {
     choiceLabel?: string,
     helpTooltip?: string,
     value: boolean,
@@ -17,7 +17,7 @@ type BooleanCheckboxProps = {
     choicePosition?: SAILChoicePosition
 }
 
-const BooleanCheckboxField = ({
+const ToggleField = ({
     choiceLabel,
     helpTooltip,
     value = false,
@@ -27,10 +27,10 @@ const BooleanCheckboxField = ({
     marginAbove,
     marginBelow = 'STANDARD',
     choicePosition
-}: BooleanCheckboxProps): string[] => {
+}: ToggleFieldProps): string[] => {
     const code: string[] = []
 
-    code.push(`a!booleanCheckboxField(`)
+    code.push(`a!toggleField(`)
     code.push(`  choiceLabel: "${choiceLabel}",`)
     if (helpTooltip) code.push(`  helpTooltip: "${helpTooltip}",`)
     code.push(`  value: ${value},`)
@@ -45,16 +45,16 @@ const BooleanCheckboxField = ({
     return code
 } 
 
-export const generateBooleanCheckboxField = async (instanceNode: InstanceNode): Promise<string[]> => {
+export const generateToggleField = async (instanceNode: InstanceNode): Promise<string[]> => {
     const props = getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
-    return BooleanCheckboxField({
+    return ToggleField({
         choiceLabel: stringProp(props['Label']?.value),
         helpTooltip: getHelpTooltipValue(instanceNode, props),
-        value: booleanProp(props['Is Checked']?.value),
+        value: booleanProp(props['Is Toggled']?.value),
         required: booleanProp(props['Is Required']?.value),
-        requiredMessage: booleanProp(props['Show Required Message']?.value) ? stringProp(props['Required Message']?.value) : undefined,
+        requiredMessage: booleanProp(props['Show Required Message']?.value) ? stringProp(props['Required Message'].value) : undefined,
         disabled: booleanProp(props['Is Disabled']?.value),
         marginAbove: mapToSAILMargin(modes['Margin Above']),
         marginBelow: mapToSAILMargin(modes['Margin Below']),
@@ -62,7 +62,7 @@ export const generateBooleanCheckboxField = async (instanceNode: InstanceNode): 
     })
 }
 
-export const isBooleanCheckboxFieldInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
+export const isToggleFieldInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
     const mainComponentName = await getMainComponentName(instanceNode)
-    return mainComponentName === 'Boolean Check Box'
+    return mainComponentName === 'Toggle'
 }

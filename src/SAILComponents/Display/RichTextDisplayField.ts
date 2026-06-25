@@ -1,7 +1,7 @@
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
 import { toHexColor } from "../../Utilities/rgbColorToHexColor"
-import { SAILTextStyle, SAILTextSize, SAILRichTextColor, SAILLabelPosition, SAILTextAlign, SAILMargin, SAILRichTextIconSize, mapToSAILRichTextIconSize, SAILIcon, isSAILIcon, mapToSAILRichTextColor, mapToSAILTextAlign, mapToSAILMargin } from "../SAILParameters"
+import { SAILTextStyle, SAILTextSize, SAILRichTextColor, SAILLabelPosition, SAILTextAlign, SAILMargin, SAILRichTextIconSize, mapToSAILRichTextIconSize, SAILIcon, isSAILIcon, mapToSAILRichTextColor, mapToSAILTextAlign, mapToSAILMargin, mapToSAILTextSize } from "../SAILParameters"
 
 type RichTextItemProps = {
     text: string
@@ -137,17 +137,18 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
         marginAbove = mapToSAILMargin(node.paddingTop)
         marginBelow = mapToSAILMargin(node.itemSpacing)
     }
-    const addGap = () => {
+    const addHorizontalSpace = () => {
         if (node.type === 'FRAME') {
             const space = ' '
-            const spacerItem = RichTextItem({ text: space.repeat(node.itemSpacing) })
+            const spacer = RichTextItem({ text: space.repeat(node.itemSpacing) })
             if (node.type === 'FRAME') {
-                richTextValues.push(spacerItem)
+                richTextValues.push(spacer)
             }
         }
     }
     
-    for (const child of children) {
+    // Handle each child in Frame Node
+    for (const [index, child] of children.entries()) {
         if (child.type === 'TEXT') {
             if (!alignResolved) {
                 align = mapToSAILTextAlign(child.textAlignHorizontal)
@@ -155,23 +156,25 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
             }
             preventWrapping = child.textTruncation === 'ENDING'
 
-            generateTextSegments(child)
+            generateTextFromTextNode(child)
+            if (index < children.length - 1) richTextValues.push(Char(10))
         } else if (child.type === 'INSTANCE') {
             richTextValues.push(await generateRichTextIcon(child))
         } else if (child.type === 'FRAME') {
             const firstChild = child.children[0]
             if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
                 richTextValues.push(await generateRichTextIcon(firstChild))
-                addGap()
+                addHorizontalSpace()
             }
         }
     }
 
-    function generateTextSegments(childNode: TextNode) {
-        const styledTextSegments = childNode.getStyledTextSegments(['fontStyle', 'fontWeight', 'textDecoration', 'fills'])
+    function generateTextFromTextNode(childNode: TextNode) {
+        const styledTextSegments = childNode.getStyledTextSegments(['fontStyle', 'fontWeight', 'textDecoration', 'fills', 'fontSize'])
         for (const textSegment of styledTextSegments) {
-            const { characters, fontStyle, fontWeight, textDecoration, fills } = textSegment
+            const { characters, fontStyle, fontWeight, textDecoration, fills, fontSize } = textSegment
             const textLines = characters.split('\n')
+            const size: SAILTextSize = mapToSAILTextSize(fontSize)
 
             const styles: SAILTextStyle[] = []
             if (fontStyle === 'ITALIC') styles.push('EMPHASIS')
@@ -190,7 +193,7 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
                 : '#000000'
 
             for (const [index, textLine] of textLines.entries()) {
-                if (textLine) richTextValues.push(RichTextItem({ text: textLine, style: styles, color: color }))
+                if (textLine) richTextValues.push(RichTextItem({ text: textLine, style: styles, color: color, size: size }))
                 if (index < textLines.length - 1) richTextValues.push(Char(10))
             }
         }
@@ -218,6 +221,7 @@ export const isRichTextIcon = async (node: SceneNode): Promise<boolean> => {
 export const isRichTextDisplayFieldFrame = async (frameNode: FrameNode): Promise<boolean> => {
     if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0) return false
     if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
+    if (frameNode.paddingLeft > 0 || frameNode.paddingRight > 0) return false
 
     const validChildrenComponents = await Promise.all(
         frameNode.children.map(async child => {

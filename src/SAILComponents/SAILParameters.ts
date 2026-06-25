@@ -10,6 +10,16 @@ export const mapToSAILTextStyle = (figmaFontStyle: FontStyle): SAILTextStyle => 
 }
 
 export type SAILTextSize = 'STANDARD' | 'SMALL' | 'MEDIUM' | 'MEDIUM_PLUS' | 'LARGE' | 'LARGE_PLUS' | 'EXTRA_LARGE'
+export const mapToSAILTextSize = (size: number): SAILTextSize => {
+    if (size <= 12) return 'SMALL'
+    else if (size <= 14) return 'STANDARD'
+    else if (size <= 17) return 'MEDIUM'
+    else if (size <= 24) return 'MEDIUM_PLUS'
+    else if (size <= 32) return 'LARGE'
+    else if (size <= 52) return 'LARGE_PLUS'
+    return 'EXTRA_LARGE'
+}
+
 export type SAILRichTextColor = 'STANDARD' | 'ACCENT' | 'POSITIVE' | 'NEGATIVE' | 'SECONDARY' | string 
 export const mapToSAILRichTextColor = (instanceNode: InstanceNode): SAILRichTextColor => { 
     let richTextColor: SAILRichTextColor = 'STANDARD'
@@ -40,6 +50,7 @@ export const mapToSAILLabelPosition = (figmaLabelPosition: string): SAILLabelPos
         case 'Above': return 'ABOVE'
         case 'Adjacent': return 'ADJACENT'
         case 'Collapsed': return 'COLLAPSED'
+        case 'Hidden': return 'COLLAPSED'
         case 'Justified': return 'JUSTIFIED'
         default: return 'COLLAPSED'
     }
@@ -333,17 +344,15 @@ export const mapToSAILChoicePosition = (figmaChoicePosition: string): SAILChoice
 export type SAILDropdownSearchDisplay = 'AUTO' | 'ON' | 'OFF'
 
 export type SAILColumnWidth = 'AUTO' | 'EXTRA_NARROW' | 'NARROW' | 'NARROW_PLUS' | 'MEDIUM' | 'MEDIUM_PLUS' | 'WIDE' | 'WIDE_PLUS' | '1X' | '2X' | '3X' | '4X' | '5X' | '6X' | '7X' | '8X' | '9X' | '10X'
-export const mapToSAILColumnWidth = (columnGap: GridTrackSize | number | 'FILL' | 'HUG'): SAILColumnWidth => {
-    if (typeof columnGap === 'string') return 'AUTO'
-
-    if (typeof columnGap === 'number') {
-        const widthInPixels = columnGap
-        if (widthInPixels <= 60) return 'EXTRA_NARROW'
-        if (widthInPixels <= 220) return 'NARROW'
-        if (widthInPixels <= 300) return 'NARROW_PLUS'
-        if (widthInPixels <= 380) return 'MEDIUM'
-        if (widthInPixels <= 540) return 'MEDIUM_PLUS'
-        if (widthInPixels <= 780) return 'WIDE'
+export const mapToSAILColumnWidth = (columnGap: GridTrackSize | number): SAILColumnWidth => {
+    if (typeof columnGap === 'number' || columnGap.type === 'FIXED') {
+        const width = typeof columnGap === 'number' ? columnGap : columnGap.value
+        if (width !== undefined && width <= 60) return 'EXTRA_NARROW'
+        if (width !== undefined && width <= 220) return 'NARROW'
+        if (width !== undefined && width <= 300) return 'NARROW_PLUS'
+        if (width !== undefined && width <= 380) return 'MEDIUM'
+        if (width !== undefined && width <= 540) return 'MEDIUM_PLUS'
+        if (width !== undefined && width <= 780) return 'WIDE'
         return 'WIDE_PLUS'
     }
 
@@ -351,7 +360,9 @@ export const mapToSAILColumnWidth = (columnGap: GridTrackSize | number | 'FILL' 
         const fractionalUnits = Math.min(Math.max(Math.round(columnGap.value ?? 1), 1), 10)
         return `${fractionalUnits}X` as SAILColumnWidth
     }
+    
     if (columnGap.type === 'HUG') return 'AUTO'
+
     return 'AUTO'
 }
 
@@ -385,6 +396,7 @@ export const mapToSAILStampSize = (figmaStampSize: string): SAILStampSize => {
 // export type SAILStampAlign = 'START' | 'CENTER'
 
 const iconNames = [
+    "",
     "vest-patches",
     "vest",
     "yin-yang",

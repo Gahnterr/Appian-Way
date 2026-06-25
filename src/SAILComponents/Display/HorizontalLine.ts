@@ -1,9 +1,9 @@
 import { isLineNode, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
-import { getLastFillFromNode, getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
+import { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
-import { RGBAToHexColor, toHexColor } from "../../Utilities/rgbColorToHexColor"
+import { toHexColor } from "../../Utilities/rgbColorToHexColor"
 import { mapToSAILMargin, SAILMargin } from "../SAILParameters"
 
 type SAILHorizontalLineColor = 'SECONDARY' | 'STANDARD' | 'ACCENT' | string

@@ -116,6 +116,7 @@ export const isCardLayoutFrame = async (node: FrameNode | InstanceNode): Promise
     if (node.type === 'FRAME') {
         if (Array.isArray(node.fills) && node.fills.length > 0) return true
         if (Array.isArray(node.strokes) && node.strokes.length > 0) return true
+        if (node.paddingBottom > 0 || node.paddingTop > 0 || node.paddingLeft > 0|| node.paddingRight > 0) return true
         if (node.layoutMode === 'VERTICAL') return true
     }
 

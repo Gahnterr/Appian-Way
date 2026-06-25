@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Run Figma then Attach",
+      "configurations": [
+        "Run Figma",
+        "Wait to Attach to Figma"
+      ]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Run Figma",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "/Applications/Figma.app/Contents/MacOS/Figma",
+      "runtimeArgs": [
+        "--remote-debugging-port=9222",
+        "--remote-debugging-address=127.0.0.1",
+        "--log-level=2",
+        "-v=2"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "outputCapture": "std",
+      "autoAttachChildProcesses": true
+    },
+    {
+      "preLaunchTask": "Wait for Figma",
+      "name": "Wait to Attach to Figma",
+      "type": "chrome",
+      "request": "attach",
+      "address": "127.0.0.1",
+      "port": 9222,
+      "targetSelection": "pick",
+      "pauseForSourceMap": true,
+      "pathMapping": {
+        "/file/": "${workspaceRoot}/",
+        "../src/": "${workspaceRoot}/src/",
+        "src/": "${workspaceRoot}/src/"
+      }
+    }
+  ]
+}

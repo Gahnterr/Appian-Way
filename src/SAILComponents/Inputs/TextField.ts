@@ -52,7 +52,7 @@ export const generateTextField = async (instanceNode: InstanceNode): Promise<str
         const valueFrame: TextNode = instanceNode.findChild(child => child.type === 'TEXT' && child.name === 'Value') as TextNode
         align = mapToSAILTextAlign(valueFrame.textAlignHorizontal)
     }
-
+    
     return TextField({
         label: stringProp(props['Label'].value),
         labelPosition: mapToSAILLabelPosition(stringProp(props['Label Position'].value)),

@@ -1,3 +1,4 @@
+import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
@@ -46,14 +47,14 @@ export const generateParagraphField = async (instanceNode: InstanceNode) => {
     const modes = await getAppliedModes(instanceNode)
 
     return ParagraphField({
-        label: props['Label'].value as string, 
-        labelPosition: mapToSAILLabelPosition(props['Label Position'].value as string),
-        instructions: props['Instructions'].value as string,
-        required: props['Is Required'].value as boolean,
+        label: stringProp(props['Label'].value), 
+        labelPosition: mapToSAILLabelPosition(stringProp(props['Label Position'].value)),
+        instructions: booleanProp(props['Show Instructions'].value) ? stringProp(props['Instructions'].value) : undefined,
+        required: booleanProp(props['Is Required'].value),
         disabled: modes['State'] === 'Disabled',
         readOnly: props['Is Read Only'].value === 'True',
-        value: props['Value'].value as string,
-        placeholder: props['Placeholder'].value as string,
+        value: stringProp(props['Value'].value),
+        placeholder: stringProp(props['Placeholder'].value),
         height: mapToSAILParagraphHeight(modes['Paragraph Height']),
         // TODO: Character Limit
         helpTooltip: getHelpTooltipValue(instanceNode, props),

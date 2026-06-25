@@ -14,6 +14,9 @@ import { generateBooleanCheckboxField } from "./SAILComponents/Selection/Boolean
 import { generateCheckboxField } from "./SAILComponents/Selection/CheckboxField"
 import { generateDropdownField } from "./SAILComponents/Selection/DropdownField"
 import { generateRadioButtonField } from "./SAILComponents/Selection/RadioButtonField"
+import { generateSegmentedController, SegmentedController } from "./SAILComponents/Selection/SegmentedController"
+import { generateToggleField } from "./SAILComponents/Selection/ToggleField"
+import { convertToFrameNode } from "./Utilities/convertToFrameNode"
 import { getMainComponentName } from "./Utilities/getMainComponentName"
 import { indent, indentStringArray } from "./Utilities/indent"
 
@@ -54,6 +57,10 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
   code.push(...indent(`/* ${currentNode?.name} */`, nestingLevel))
 
   switch (currentNode?.type) {
+    case 'GROUP': {
+      if (currentNode.children.length === 1) addToCode(await generateSAILFromNode(currentNode.children[0]))
+      break
+    }
     case 'RECTANGLE': {
       if (isImageField(currentNode)) {
         code.push(...indentStringArray(generateImageField(currentNode), nestingLevel))
@@ -64,10 +71,20 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
       break
     }
     case 'TEXT':
-      code.push(...indentStringArray(await generateRichTextDisplayField(currentNode), nestingLevel))
+      addToCode(await generateRichTextDisplayField(currentNode))
       break
     case 'INSTANCE': {
       await generateInstanceComponent(currentNode, addToCode, code, nestingLevel)
+      break
+    }
+    case 'SLOT': {
+      code.splice(code.length - 1) // Prevents duplicate layer names in the generated code.
+      code.push(`{`)
+      const slotContents = currentNode.children
+      for (const node of slotContents) {
+        await addToCode(await generateSAILFromNode(node, nestingLevel + 1))
+      }
+      code.push(`},`)
       break
     }
     default: code.push(`/* Invalid element selected. */`)
@@ -105,8 +122,14 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       case 'Boolean Check Box':
         addToCode(await generateBooleanCheckboxField(currentNode))
         break
+      case 'Toggle':
+        addToCode(await generateToggleField(currentNode))
+        break
       case 'Horizontal Line': 
         addToCode(await generateHorizontalLine(currentNode))
+        break
+      case 'Segmented Controller':
+        addToCode(await generateSegmentedController(currentNode))
         break
       case 'Section': {
         const contentsSlot = getContentsSlotNodeFrom(currentNode, code)
@@ -137,13 +160,24 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
         break
       }
       default:
-        code.push(`/* This instance is not recognized as a supported SAIL component. */`)
+        code.splice(code.length - 1) // Prevents duplicate layer names in the generated code.
+        code.push(`/* The following instance is not recognized as a supported SAIL component and is being treated as a regular Frame: */`)
+        addToCode(await generateSAILFromNode(convertToFrameNode(currentNode)))
+        break
     }
   }
 }
 
 async function generateFrameComponent(currentNode: FrameNode, code: string[], nestingLevel: number) {
-  if (await isButtonArrayFrame(currentNode)) {
+  if (currentNode.type === 'FRAME' 
+    && currentNode.children.length === 1 
+    && Array.isArray(currentNode.fills) && currentNode.fills.length === 0 
+    && Array.isArray(currentNode.strokes) && currentNode.strokes.length === 0 
+    && currentNode.paddingBottom === 0 && currentNode.paddingTop === 0 && currentNode.paddingLeft === 0 && currentNode.paddingRight === 0 
+    && currentNode.effects.length === 0
+  ) {
+    code.push(...indentStringArray(await generateSAILFromNode(currentNode.children[0]), nestingLevel))
+  } else if (await isButtonArrayFrame(currentNode)) {
     code.push(...indentStringArray(await generateButtonArrayLayout(currentNode), nestingLevel))
   } else if (await isRichTextDisplayFieldFrame(currentNode)) {
     code.push(...indentStringArray(await generateRichTextDisplayField(currentNode), nestingLevel))
@@ -183,7 +217,7 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
 
     code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode), nestingLevel))
 
-  } else code.push(`/* This frame is not recognized as a supported SAIL component. */`)
+  } else code.push(...["/* This frame's contents cannot be translated into SAIL code.", "   Make sure you're the Verato UI's design library components. */"])
 }
 
 function getContentsSlotNodeFrom(node: InstanceNode, code: string[]): SlotNode | undefined {

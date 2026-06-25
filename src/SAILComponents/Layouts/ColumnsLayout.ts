@@ -86,20 +86,6 @@ export const generateColumnsLayout = (frameNode: FrameNode, childrenCode: string
         }
         rows.push(`}`)
         return rows
-
-        // for (let columnIndex = 0; columnIndex < frameNode.gridColumnCount; columnIndex++) {
-        //     const width = mapToSAILColumnWidth(frameNode.gridColumnSizes[columnIndex])
-        //     const columnContents: string[] = []
-
-        //     // frameNode.children.forEach((child, childIndex) => {
-        //     //     const columnAnchorIndex = 'gridColumnAnchorIndex' in child ? child.gridColumnAnchorIndex : 0
-        //     //     const rowAnchorIndex = 'gridRowAnchorIndex' in child ? child.gridRowAnchorIndex : 0
-        //     //     if (columnAnchorIndex === columnIndex && rowAnchorIndex === 0) {
-        //     //         columnContents.push(...childrenCode[childIndex])
-        //     //     }
-        //     // })
-        //     // columns.push(...ColumnLayout({ contents: columnContents, width }))
-        // }
     } else {
         spacing = mapToSAILColumnsLayoutSpacing(frameNode.itemSpacing)
 

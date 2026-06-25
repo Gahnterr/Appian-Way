@@ -1,5 +1,3 @@
-import { SAILIcon } from "./SAILComponents/SAILParameters"
-
 export const isSlotNodesArray = (node: SceneNode[]): node is SlotNode[] => {
     return Array.isArray(node)
         && node.every(n => n.type === 'SLOT')
@@ -7,8 +5,14 @@ export const isSlotNodesArray = (node: SceneNode[]): node is SlotNode[] => {
         && node !== undefined
 }
 
-export const isSlotNode = (node: SceneNode): node is SlotNode => {
-    return node?.type === 'SLOT' 
+export const isSlotNode = (node: SceneNode | undefined): node is SlotNode => {
+    return node !== null 
+    && node !== undefined
+    && node?.type === 'SLOT' 
+}
+
+export const isFrameNode = (node: SceneNode): node is FrameNode => {
+    return node?.type === 'FRAME' 
     && node !== null 
     && node !== undefined
 }
@@ -31,8 +35,9 @@ export const isString = (param: unknown): param is string => {
 }
 
 export const stringProp = (value: string | boolean): string => {
+    if (!value) return ''
     if (isString(value)) return value
-    else throw new Error(`Received an invalid component prop value: ${value.toString()}`)
+    else throw new Error(`Received an invalid component prop value.`)
 }
 
 export const isBoolean = (param: unknown): param is boolean => {

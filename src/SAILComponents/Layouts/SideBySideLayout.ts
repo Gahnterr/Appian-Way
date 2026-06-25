@@ -10,6 +10,8 @@ import { isBooleanCheckboxFieldInstance } from "../Selection/BooleanCheckboxFiel
 import { isRadioButtonFieldInstance } from "../Selection/RadioButtonField"
 import { isImageField } from "../Display/ImageField"
 import { isHorizontalLineInstance } from "../Display/HorizontalLine"
+import { isCheckboxFieldInstance } from "../Selection/CheckboxField"
+import { isToggleFieldInstance } from "../Selection/ToggleField"
 
 type SideBySideItem = {
     item: string[]
@@ -41,7 +43,7 @@ const SideBySideLayout = ({ items, alignVertical, itemSpacing, marginAbove, marg
     code.push(...indentStringArray(items, 2))
     code.push(`  },`)
     code.push(`  alignVertical: "${alignVertical}",`)
-    code.push(`  itemSpacing: "${itemSpacing}",`)
+    code.push(`  spacing: "${itemSpacing}",`)
     code.push(`  marginAbove: "${marginAbove}",`)
     code.push(`  marginBelow: "${marginBelow}",`)
     code.push(`),`)
@@ -71,7 +73,7 @@ export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boo
     if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
 
     for (const child of frameNode.children) {
-        return await isLayoutFrame(child) || await isKnownComponentInstance(child) 
+        return await isLayoutFrame(child) || await isValidComponentInstance(child) 
     }
 
     return true
@@ -86,7 +88,7 @@ const isLayoutFrame = async (node: SceneNode): Promise<boolean> => {
     return false
 }
 
-const isKnownComponentInstance = async (node: SceneNode): Promise<boolean> => {
+const isValidComponentInstance = async (node: SceneNode): Promise<boolean> => {
     if (node.type === 'INSTANCE') return await isStampFieldInstance(node)
         || await isTextFieldInstance(node)
         || await isParagraphFieldInstance(node)
@@ -95,6 +97,8 @@ const isKnownComponentInstance = async (node: SceneNode): Promise<boolean> => {
         || await isRadioButtonFieldInstance(node)
         || await isRichTextIcon(node)
         || await isHorizontalLineInstance(node)
+        || await isCheckboxFieldInstance(node)
+        || await isToggleFieldInstance(node)
 
     return false
 }

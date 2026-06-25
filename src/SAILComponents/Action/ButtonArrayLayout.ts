@@ -1,9 +1,12 @@
+import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
+import { getComponentProps } from "../../Utilities/getComponentProps"
+import { getIconNameById } from "../../Utilities/getIconNameById"
 import { __getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
 import { mapToSAILButtonArrayLayoutAlign, mapToSAILButtonColor, mapToSAILButtonIconPosition, mapToSAILButtonSize, mapToSAILButtonStyle, mapToSAILMargin, SAILButtonArrayLayoutAlign, SAILButtonColor, SAILButtonIconPosition, SAILButtonSize, SAILButtonStyle, SAILButtonWidth, SAILMargin } from "../SAILParameters"
 
-type ButtonWidget = {
+type ButtonWidgetProps = {
     label?: string,
     style?: SAILButtonStyle
     disabled?: boolean
@@ -15,7 +18,7 @@ type ButtonWidget = {
     color?: SAILButtonColor
 }
 
-const ButtonWidget = ({ label, style, disabled, size, width, icon, tooltip, iconPosition, color }: ButtonWidget) => {
+const ButtonWidget = ({ label, style, disabled, size, width, icon, tooltip, iconPosition, color }: ButtonWidgetProps) => {
     const code: string[] = []
 
     code.push(`a!buttonWidget(`)
@@ -35,43 +38,36 @@ const ButtonWidget = ({ label, style, disabled, size, width, icon, tooltip, icon
 export const generateButtonWidget = async (instanceNode: InstanceNode): Promise<string[]> => {
     let label: string = ''
     const appliedModes = await getAppliedModes(instanceNode)
-    const disabled: boolean = instanceNode.componentProperties['State'].value === 'Disabled'
-    const getIconName = async (id: string): Promise<string> => {
-        const iconNode = await figma.getNodeByIdAsync(id)
-        return iconNode ? iconNode.name : ''
-    }
+    const props = getComponentProps(instanceNode)
     let icon: string | undefined
     let iconPosition: SAILButtonIconPosition | undefined
-    const iconPositionProp: string = instanceNode.componentProperties['Icon Position'].value as string
-    const iconNameProp: string = instanceNode.componentProperties['Icon#614:0'].value as string
+    const iconPositionProp = stringProp(props['Icon Position']?.value)
+    const iconNameProp = stringProp(props['Icon']?.value)
     if (iconPositionProp === 'Left' ||
         iconPositionProp === 'Right' ||
         iconPositionProp === 'Icon Only') {
-        icon = await getIconName(iconNameProp)
+        icon = await getIconNameById(iconNameProp)
         iconPosition = await mapToSAILButtonIconPosition(iconPositionProp)
     }
     if (iconPositionProp === 'Left' ||
         iconPositionProp === 'Right' ||
         iconPositionProp === 'Text Only') {
-        label = instanceNode.componentProperties['Label#614:146'].value as string
+        label = stringProp(props['Label'].value)
     }
-    const style: SAILButtonStyle = mapToSAILButtonStyle(appliedModes['Btn Style'])
-    const size: SAILButtonSize = mapToSAILButtonSize(appliedModes['Btn Size'])
-    const color: SAILButtonColor = mapToSAILButtonColor(appliedModes['Color Style'])
 
     return ButtonWidget({
         label,
-        style,
-        disabled,
-        size,
+        style: mapToSAILButtonStyle(appliedModes['Btn Style']),
+        disabled: booleanProp(props['State']?.value === 'Disabled'),
+        size: mapToSAILButtonSize(appliedModes['Btn Size']),
         icon,
         iconPosition,
-        color
+        color: mapToSAILButtonColor(appliedModes['Color Style'])
     })
 }
 
 type ButtonArrayLayout = {
-    buttons: ButtonWidget[]
+    buttons: ButtonWidgetProps[]
     align?: SAILButtonArrayLayoutAlign
     marginBelow?: SAILMargin
 }

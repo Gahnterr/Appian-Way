@@ -6,5 +6,7 @@ export const getComponentSlot = (instanceNode: InstanceNode, slotName: string): 
 }
 
 export const getItemsFromSlot = (slotNode: SlotNode): SceneNode[] => {
+    if (!Array.isArray(slotNode.children)) return []
+
     return slotNode.children.map(child => child)
 }
