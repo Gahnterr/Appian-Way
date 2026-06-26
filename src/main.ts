@@ -3,6 +3,7 @@ import { generateHorizontalLine } from "./SAILComponents/Display/HorizontalLine"
 import { generateImageField, isImageField } from "./SAILComponents/Display/ImageField"
 import { generateRichTextDisplayField, generateSingleRichTextIcon, isRichTextDisplayFieldFrame } from "./SAILComponents/Display/RichTextDisplayField"
 import { generateStampField } from "./SAILComponents/Display/StampField"
+import { generateDateTimeField } from "./SAILComponents/Inputs/DateTimeField"
 import { generateParagraphField } from "./SAILComponents/Inputs/ParagraphField"
 import { generateTextField } from "./SAILComponents/Inputs/TextField"
 import { generateCardLayout, isCardLayoutFrame } from "./SAILComponents/Layouts/CardLayout"
@@ -57,6 +58,18 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
   code.push(...indent(`/* ${currentNode?.name} */`, nestingLevel))
 
   switch (currentNode?.type) {
+    case 'FRAME': {
+      await generateFrameComponent(currentNode, code, nestingLevel)
+      break
+    }
+    case 'LINE': {
+      if (currentNode.width > currentNode.height) await addToCode(await generateHorizontalLine(currentNode))
+      break
+    }
+    case 'VECTOR': {
+      if (currentNode.width > currentNode.height) await addToCode(await generateHorizontalLine(currentNode))
+      break
+    }
     case 'GROUP': {
       if (currentNode.children.length === 1) addToCode(await generateSAILFromNode(currentNode.children[0]))
       break
@@ -65,9 +78,6 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
       if (isImageField(currentNode)) {
         code.push(...indentStringArray(generateImageField(currentNode), nestingLevel))
       }
-    }; break
-    case 'FRAME': {
-      await generateFrameComponent(currentNode, code, nestingLevel)
       break
     }
     case 'TEXT':
@@ -106,6 +116,9 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
         break
       case 'Text Field':
         addToCode(await generateTextField(currentNode))
+        break
+      case 'Date & Time':
+        addToCode(await generateDateTimeField(currentNode))
         break
       case 'Paragraph Field':
         addToCode(await generateParagraphField(currentNode))
@@ -150,8 +163,8 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
           code.push(`/* Card Layout instance has no 'Contents' slot. */`)
           break
         }
+        
         const childrenCode: string[] = []
-
         for (const child of contentsSlot.children) {
           childrenCode.push(...await generateSAILFromNode(child, nestingLevel))
         }

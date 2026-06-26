@@ -1,6 +1,6 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getIconNameById } from "../../Utilities/getIconNameById"
 import { __getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
@@ -38,7 +38,7 @@ const ButtonWidget = ({ label, style, disabled, size, width, icon, tooltip, icon
 export const generateButtonWidget = async (instanceNode: InstanceNode): Promise<string[]> => {
     let label: string = ''
     const appliedModes = await getAppliedModes(instanceNode)
-    const props = getComponentProps(instanceNode)
+    const props = __getComponentProps(instanceNode)
     let icon: string | undefined
     let iconPosition: SAILButtonIconPosition | undefined
     const iconPositionProp = stringProp(props['Icon Position']?.value)

@@ -1,6 +1,6 @@
 import { stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
 import { SAILLabelPosition, SAILDropdownSearchDisplay, SAILMargin, mapToSAILLabelPosition, mapToSAILMargin } from "../SAILParameters"
@@ -42,7 +42,7 @@ export const DropdownField = ({ label, labelPosition, instructions, required, di
     return code
 }
 export const generateDropdownField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const props = getComponentProps(instanceNode)
+    const props = __getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
     
     return DropdownField({

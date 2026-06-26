@@ -17,7 +17,7 @@ export const getLastFillFromNode = (node?: FrameNode | InstanceNode | RectangleN
     return resultingColor as RGBA
 }
 
-export const getLastStrokeFromNode = (node?: FrameNode | InstanceNode | RectangleNode | LineNode | TextNode | SlotNode): RGBA => {
+export const getLastStrokeFromNode = (node?: FrameNode | InstanceNode | RectangleNode | LineNode | TextNode | SlotNode | VectorNode): RGBA => {
     if (node !== undefined && Array.isArray(node.strokes) && node.strokes.length > 0) {
         const strokes = node.strokes.filter((stroke): stroke is SolidPaint => stroke.type === 'SOLID')
         const lastStroke = strokes.length > 0 ? strokes[strokes.length - 1] : null

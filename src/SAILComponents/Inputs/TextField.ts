@@ -1,6 +1,6 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { mapToSAILLabelPosition, mapToSAILMargin, mapToSAILTextAlign, SAILLabelPosition, SAILMargin, SAILTextAlign } from "../SAILParameters"
 
@@ -44,7 +44,7 @@ export const TextField = ({ label, labelPosition, instructions, required, requir
 }
 
 export const generateTextField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const props = getComponentProps(instanceNode)
+    const props = __getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     let align: SAILTextAlign = 'LEFT'

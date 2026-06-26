@@ -1,5 +1,5 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getComponentSlot, getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
@@ -48,7 +48,7 @@ export const RadioButtonField = ({ label, labelPosition, instructions, required,
 
 export const generateRadioButtonField = async (instanceNode: InstanceNode): Promise<string[]> => {
     const radioButtonsInstanceNode = instanceNode.findOne(node => node.type === 'INSTANCE' && node.name === '_Radio Buttons') as InstanceNode
-    const props = getComponentProps(instanceNode, radioButtonsInstanceNode)
+    const props = __getComponentProps(instanceNode, radioButtonsInstanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     const choiceLabels: string[] = []
@@ -56,7 +56,7 @@ export const generateRadioButtonField = async (instanceNode: InstanceNode): Prom
     const radioButtonsSlotNode = getComponentSlot(instanceNode, 'Radio Buttons') as SlotNode
     const radioButtonItems: InstanceNode[] = getItemsFromSlot(radioButtonsSlotNode).filter(item => item.type === 'INSTANCE')
     radioButtonItems.forEach((radioButtonItem, index) => {
-        const props = getComponentProps(radioButtonItem)
+        const props = __getComponentProps(radioButtonItem)
         choiceLabels.push(props['Label'].value as string)
         choiceValues.push(index)
     })

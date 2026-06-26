@@ -1,6 +1,6 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getLastFillFromNode, getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { indentStringArray } from "../../Utilities/indent"
 import { RGBAToHexColor, toHexColor } from "../../Utilities/rgbColorToHexColor"
@@ -93,7 +93,7 @@ const SectionLayout = ({
 }
 
 export const generateSectionLayout = async (instanceNode: InstanceNode, childrenCode: string[]): Promise<string[]> => {
-    const props = getComponentProps(instanceNode)
+    const props = __getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
     const isShowingIcon = props['Show Icon'].value === true ? true : false
     const contentsSlotNode = instanceNode.findOne(child => child.type === 'SLOT' && child.name === 'Contents')

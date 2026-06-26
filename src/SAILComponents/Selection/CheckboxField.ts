@@ -1,5 +1,5 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getComponentSlot, getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
@@ -50,7 +50,7 @@ export const CheckboxField = ({ label, labelPosition, instructions, required, di
 
 export const generateCheckboxField = async (instanceNode: InstanceNode): Promise<string[]> => {
     const checkBoxesInstanceNode = instanceNode.findOne(node => node.type === 'INSTANCE' && node.name === '_Check Boxes') as InstanceNode
-    const props = getComponentProps(instanceNode, checkBoxesInstanceNode)
+    const props = __getComponentProps(instanceNode, checkBoxesInstanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     const choiceLabels: string[] = []
@@ -59,7 +59,7 @@ export const generateCheckboxField = async (instanceNode: InstanceNode): Promise
     const checkBoxesSlotNode = getComponentSlot(instanceNode, 'Check Boxes') as SlotNode
     const checkBoxItems: InstanceNode[] = getItemsFromSlot(checkBoxesSlotNode).filter(item => item.type === 'INSTANCE')
     checkBoxItems.forEach((checkBoxItem, index) => {
-        const props = getComponentProps(checkBoxItem)
+        const props = __getComponentProps(checkBoxItem)
         choiceLabels.push(props['Label'].value as string)
         choiceValues.push(index)
         if (props['Is Checked'].value === 'True') value.push(index)

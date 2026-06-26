@@ -1,6 +1,6 @@
 import { isLineNode, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getComponentProps } from "../../Utilities/getComponentProps"
+import { __getComponentProps } from "../../Utilities/getComponentProps"
 import { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { toHexColor } from "../../Utilities/rgbColorToHexColor"
@@ -20,23 +20,26 @@ const mapToSAILHorizontalLineColor = (strokeColor: RGB): SAILHorizontalLineColor
 }
 
 type SAILHorizontalWeight = 'THIN' | 'MEDIUM' | 'THICK'
-const mapToSAILHorizontalWeight = (weight: string, instanceNode?: InstanceNode): SAILHorizontalWeight => {
-    switch (weight) {
+const mapToSAILHorizontalWeight = (weightFromModes?: string, node?: InstanceNode | LineNode | VectorNode): SAILHorizontalWeight => {
+    switch (weightFromModes) {
         case 'Thin': return 'THIN'
         case 'Medium': return 'MEDIUM'
         case 'Thick': return 'THICK'
         default: break
     }
-    if (instanceNode !== undefined) {
-        const lineNode = instanceNode.findChild(child => child.type === 'LINE')
+    let strokeWeight: number = 0
+    if (node !== undefined && node.type === 'INSTANCE') {
+        const lineNode = node.findChild(child => child.type === 'LINE')
         if (lineNode && isLineNode(lineNode)) {
-            const strokeWeight = lineNode.strokeWeight !== figma.mixed ? lineNode.strokeWeight : 0
-            if (strokeWeight < 0) return 'THIN'
-            else if (strokeWeight <= 3) return 'MEDIUM'
-            else return 'THICK'
+            if (lineNode.strokeWeight !== figma.mixed) strokeWeight = lineNode.strokeWeight
         }
     }
-    return 'THIN'
+    if (node !== undefined && ((node.type === 'LINE' || node.type === 'VECTOR') && node.strokeWeight !== figma.mixed)) {
+        strokeWeight = node.strokeWeight
+    }
+    if (strokeWeight <= 1) return 'THIN'
+    else if (strokeWeight <= 3) return 'MEDIUM'
+    else return 'THICK'
 }
 
 type SAILHorizontalLineStyle = 'SOLID' | 'DOT' | 'DASH'
@@ -72,19 +75,39 @@ const HorizontalLine = ({ color, weight, marginAbove, marginBelow, style }: Hori
     return code
 }
 
-export const generateHorizontalLine = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const modes = await getAppliedModes(instanceNode)
-    const props = getComponentProps(instanceNode)
+export const generateHorizontalLine = async (node: InstanceNode | LineNode | VectorNode): Promise<string[]> => {
+    let lineStrokeColor: RGBA = {r: 1, g: 0, b: 1, a: 1}
+    let weight
+    let marginAbove: SAILMargin | undefined
+    let marginBelow: SAILMargin | undefined
+    let style: SAILHorizontalLineStyle = "SOLID"
 
-    const lineNode = instanceNode.children[0].type === 'LINE' ? instanceNode.children[0] : undefined
-    const lineStrokeColor = getLastStrokeFromNode(lineNode)
+    if (node.type === 'INSTANCE') {
+        const modes = await getAppliedModes(node)
+        const props = __getComponentProps(node)
+        const lineNode = node.children[0].type === 'LINE' ? node.children[0] : undefined
+        lineStrokeColor = getLastStrokeFromNode(lineNode)
+        weight = mapToSAILHorizontalWeight(stringProp(props['Weight'].value), node)
+
+        marginAbove = mapToSAILMargin(modes['Margin Above'])
+        marginBelow = mapToSAILMargin(modes['Margin Below'])
+        style = mapToSAILHorizontalLineStyle(stringProp(props['Style'].value))
+    } else if (node.type === 'LINE' || node.type === 'VECTOR') {
+        lineStrokeColor = getLastStrokeFromNode(node)
+        weight = mapToSAILHorizontalWeight('', node)
+        marginAbove = 'NONE'
+        marginBelow = 'NONE'
+        if (node.dashPattern.length === 0) style = 'SOLID'
+        else if (node.dashPattern.length >= 2 && node.dashPattern.every(number => number === 1)) style = 'DOT'
+        else style = 'DASH'
+    }
 
     return HorizontalLine({
         color: mapToSAILHorizontalLineColor(lineStrokeColor),
-        weight: mapToSAILHorizontalWeight(stringProp(props['Weight'].value), instanceNode),
-        marginAbove: mapToSAILMargin(modes['Margin Above']),
-        marginBelow: mapToSAILMargin(modes['Margin Below']),
-        style: mapToSAILHorizontalLineStyle(stringProp(props['Style'].value))
+        weight,
+        marginAbove,
+        marginBelow,
+        style
     })
 }
 
