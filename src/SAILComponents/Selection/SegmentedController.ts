@@ -1,6 +1,6 @@
 import { isInstanceNodesArray, isSlotNode, stringProp } from "../../typeguards"
 import { convertArrayToSAILList } from "../../Utilities/convertArrayToSAILList"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getIconNameById } from "../../Utilities/getIconNameById"
 import { isSAILIcon, mapToSAILLabelPosition, mapToSAILMargin, SAILColumnWidth, SAILIcon, SAILLabelPosition, SAILMargin } from "../SAILParameters"
@@ -42,7 +42,7 @@ const SegmentedController = ({
 }
 
 export const generateSegmentedController = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const props = __getComponentProps(instanceNode)
+    const props = getComponentProps(instanceNode)
 
     const choiceLabels: string[] = []
     const choiceValues: number[] = []
@@ -54,7 +54,7 @@ export const generateSegmentedController = async (instanceNode: InstanceNode): P
             .filter(child => child.type === 'INSTANCE' && child.name === 'Segment')
         if (isInstanceNodesArray(segments)) {
             for (const [index, segment] of segments.entries()) {
-                const segmentProps = __getComponentProps(segment)
+                const segmentProps = getComponentProps(segment)
                 const icon = await getIconNameById(stringProp(segmentProps['Icon']?.value))
                 choiceLabels.push(stringProp(segmentProps['Label']?.value))
                 choiceTooltips.push(stringProp(segmentProps['Label']?.value))

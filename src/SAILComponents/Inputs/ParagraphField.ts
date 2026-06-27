@@ -1,6 +1,6 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue as getHelpTooltipValue } from "../../Utilities/getTooltipValue"
 import { SAILLabelPosition, SAILParagraphHeight, SAILMargin, mapToSAILLabelPosition, mapToSAILParagraphHeight, mapToSAILMargin } from "../SAILParameters"
@@ -43,7 +43,7 @@ export const ParagraphField = ({ label, labelPosition, instructions, required, d
 }
 
 export const generateParagraphField = async (instanceNode: InstanceNode) => {
-    const props = __getComponentProps(instanceNode)
+    const props = getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     return ParagraphField({

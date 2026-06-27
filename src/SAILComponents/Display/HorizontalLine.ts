@@ -1,6 +1,6 @@
 import { isLineNode, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { toHexColor } from "../../Utilities/rgbColorToHexColor"
@@ -84,7 +84,7 @@ export const generateHorizontalLine = async (node: InstanceNode | LineNode | Vec
 
     if (node.type === 'INSTANCE') {
         const modes = await getAppliedModes(node)
-        const props = __getComponentProps(node)
+        const props = getComponentProps(node)
         const lineNode = node.children[0].type === 'LINE' ? node.children[0] : undefined
         lineStrokeColor = getLastStrokeFromNode(lineNode)
         weight = mapToSAILHorizontalWeight(stringProp(props['Weight'].value), node)

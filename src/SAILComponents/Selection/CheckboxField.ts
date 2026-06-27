@@ -1,5 +1,6 @@
+import { booleanProp, isSlotNode, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getComponentSlot, getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
@@ -49,33 +50,32 @@ export const CheckboxField = ({ label, labelPosition, instructions, required, di
 }
 
 export const generateCheckboxField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const checkBoxesInstanceNode = instanceNode.findOne(node => node.type === 'INSTANCE' && node.name === '_Check Boxes') as InstanceNode
-    const props = __getComponentProps(instanceNode, checkBoxesInstanceNode)
+    const props = getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     const choiceLabels: string[] = []
     const choiceValues: number[] = []
     const value: number[] = []
-    const checkBoxesSlotNode = getComponentSlot(instanceNode, 'Check Boxes') as SlotNode
-    const checkBoxItems: InstanceNode[] = getItemsFromSlot(checkBoxesSlotNode).filter(item => item.type === 'INSTANCE')
+    const checkBoxesSlotNode = getComponentSlot(instanceNode, 'Check Boxes')
+    const checkBoxItems: InstanceNode[] = isSlotNode(checkBoxesSlotNode) ? getItemsFromSlot(checkBoxesSlotNode).filter(item => item.type === 'INSTANCE') : []
     checkBoxItems.forEach((checkBoxItem, index) => {
-        const props = __getComponentProps(checkBoxItem)
-        choiceLabels.push(props['Label'].value as string)
+        const props = getComponentProps(checkBoxItem)
+        choiceLabels.push(stringProp(props['Label']?.value))
         choiceValues.push(index)
-        if (props['Is Checked'].value === 'True') value.push(index)
+        if (props['Is Checked']?.value === 'True') value.push(index)
     })
     
     return CheckboxField({
-        label: props['Label'].value as string,
-        labelPosition: mapToSAILLabelPosition(props['Label Position'].value as string),
-        instructions: props['Show Instructions'].value ? props['Instructions'].value as string : undefined,
-        required: props['Is Required'].value as boolean,
+        label: stringProp(props['Label']?.value),
+        labelPosition: mapToSAILLabelPosition(stringProp(props['Label Position']?.value)),
+        instructions: props['Show Instructions']?.value === true ? stringProp(props['Instructions']?.value) : undefined,
+        required: booleanProp(props['Is Required']?.value),
         disabled: modes['Is Disabled'] === 'Yes',
         choiceLabels,
         choiceValues,
         value,
-        choiceLayout: mapToSAILChoiceLayout(props['Choice Layout']?.value as string ?? undefined),
-        choiceStyle: mapToSAILChoiceStyle(props['Choice Style']?.value as string ?? undefined),
+        choiceLayout: mapToSAILChoiceLayout(stringProp(props['_Check Boxes/Choice Layout']?.value)),
+        choiceStyle: mapToSAILChoiceStyle(stringProp(props['_Check Boxes/Choice Style']?.value)),
         choicePosition: mapToSAILChoicePosition(modes['Choice Position']),
         spacing: mapToSAILChoiceSpacing(modes['Spacing (Selection)']),
         helpTooltip: getTooltipValue(instanceNode, props),

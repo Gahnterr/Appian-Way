@@ -50,3 +50,17 @@ export const booleanProp = (value: string | boolean): boolean => {
     else if (value === 'False' || value === 'No') return false
     else throw new Error(`Received an invalid component prop value: ${value.toString()}`)
 }
+
+export const isInstanceNode = (node: SceneNode): node is InstanceNode => {
+    return node !== undefined && node !== null && node.type === 'INSTANCE'
+}
+
+// export const asInstanceNodeArray = (array: SceneNode[] | null): InstanceNode[] => {
+//     if (
+//         array !== null 
+//         && Array.isArray(array) 
+//         && array.every(item => item.type === 'INSTANCE' 
+//             && isInstanceNode(item))
+//     ) return array 
+//     throw 
+// }

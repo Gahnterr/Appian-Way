@@ -1,6 +1,6 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue as getHelpTooltipValue } from "../../Utilities/getTooltipValue"
 import { mapToSAILChoicePosition, mapToSAILMargin, SAILChoicePosition, SAILMargin } from "../SAILParameters"
@@ -46,7 +46,7 @@ const BooleanCheckboxField = ({
 } 
 
 export const generateBooleanCheckboxField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const props = __getComponentProps(instanceNode)
+    const props = getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     return BooleanCheckboxField({

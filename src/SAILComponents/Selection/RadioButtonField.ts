@@ -1,5 +1,5 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getComponentProps } from "../../Utilities/getComponentProps"
+import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getComponentSlot, getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { getTooltipValue } from "../../Utilities/getTooltipValue"
@@ -47,8 +47,7 @@ export const RadioButtonField = ({ label, labelPosition, instructions, required,
 }
 
 export const generateRadioButtonField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const radioButtonsInstanceNode = instanceNode.findOne(node => node.type === 'INSTANCE' && node.name === '_Radio Buttons') as InstanceNode
-    const props = __getComponentProps(instanceNode, radioButtonsInstanceNode)
+    const props = getComponentProps(instanceNode)
     const modes = await getAppliedModes(instanceNode)
 
     const choiceLabels: string[] = []
@@ -56,7 +55,7 @@ export const generateRadioButtonField = async (instanceNode: InstanceNode): Prom
     const radioButtonsSlotNode = getComponentSlot(instanceNode, 'Radio Buttons') as SlotNode
     const radioButtonItems: InstanceNode[] = getItemsFromSlot(radioButtonsSlotNode).filter(item => item.type === 'INSTANCE')
     radioButtonItems.forEach((radioButtonItem, index) => {
-        const props = __getComponentProps(radioButtonItem)
+        const props = getComponentProps(radioButtonItem)
         choiceLabels.push(props['Label'].value as string)
         choiceValues.push(index)
     })
@@ -70,8 +69,8 @@ export const generateRadioButtonField = async (instanceNode: InstanceNode): Prom
         choiceLabels,
         choiceValues,
         value: 0,
-        choiceLayout: mapToSAILChoiceLayout(props['Choice Layout']?.value as string ?? undefined),
-        choiceStyle: mapToSAILChoiceStyle(props['Choice Style']?.value as string ?? undefined),
+        choiceLayout: mapToSAILChoiceLayout(props['_Radio Buttons/Choice Layout']?.value as string ?? undefined),
+        choiceStyle: mapToSAILChoiceStyle(props['_Radio Buttons/Choice Style']?.value as string ?? undefined),
         choicePosition: mapToSAILChoicePosition(modes['Choice Position']),
         spacing: mapToSAILChoiceSpacing(modes['Spacing (Selection)']),
         helpTooltip: getTooltipValue(instanceNode, props),

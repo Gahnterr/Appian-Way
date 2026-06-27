@@ -39,9 +39,9 @@ export const __getComponentProps = (instanceNode: InstanceNode, nestedInstances?
 
     // Recursively get component properties from exposed nested instances that the given instance node may have. If any are found, they are returned at the end of the object.
     if (nestedInstances && !Array.isArray(nestedInstances)) {
-        nestedProps = { ...__getComponentProps(nestedInstances) }
+        nestedProps = { ...getComponentProps(nestedInstances) }
     } else if (nestedInstances && Array.isArray(nestedInstances)) {
-        nestedInstances.forEach(nestedInstance => nestedProps = { ...__getComponentProps(nestedInstance) })
+        nestedInstances.forEach(nestedInstance => nestedProps = { ...getComponentProps(nestedInstance) })
     }
 
     return { ...instanceProps, ...nestedProps }

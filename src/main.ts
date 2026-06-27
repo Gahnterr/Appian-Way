@@ -15,7 +15,7 @@ import { generateBooleanCheckboxField } from "./SAILComponents/Selection/Boolean
 import { generateCheckboxField } from "./SAILComponents/Selection/CheckboxField"
 import { generateDropdownField } from "./SAILComponents/Selection/DropdownField"
 import { generateRadioButtonField } from "./SAILComponents/Selection/RadioButtonField"
-import { generateSegmentedController, SegmentedController } from "./SAILComponents/Selection/SegmentedController"
+import { generateSegmentedController } from "./SAILComponents/Selection/SegmentedController"
 import { generateToggleField } from "./SAILComponents/Selection/ToggleField"
 import { convertToFrameNode } from "./Utilities/convertToFrameNode"
 import { getMainComponentName } from "./Utilities/getMainComponentName"
