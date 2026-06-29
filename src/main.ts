@@ -6,7 +6,7 @@ import { generateStampField } from "./SAILComponents/Display/StampField"
 import { generateDateTimeField } from "./SAILComponents/Inputs/DateTimeField"
 import { generateParagraphField } from "./SAILComponents/Inputs/ParagraphField"
 import { generateTextField } from "./SAILComponents/Inputs/TextField"
-import { generateCardLayout, isCardLayoutFrame } from "./SAILComponents/Layouts/CardLayout"
+import { generateCardLayout, generateCardWithHorizontalLayout, isCardLayoutNode, isFrameWithChildrenInHorizontalLayout } from "./SAILComponents/Layouts/CardLayout"
 import { generateColumnsLayout, isColumnsLayoutFrame } from "./SAILComponents/Layouts/ColumnsLayout"
 import { generateSectionLayout } from "./SAILComponents/Layouts/SectionLayout"
 import { generateSideBySideLayout, isSideBySideLayoutFrame } from "./SAILComponents/Layouts/SideBySideLayout"
@@ -138,7 +138,7 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       case 'Toggle':
         addToCode(await generateToggleField(currentNode))
         break
-      case 'Horizontal Line': 
+      case 'Horizontal Line':
         addToCode(await generateHorizontalLine(currentNode))
         break
       case 'Segmented Controller':
@@ -163,7 +163,7 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
           code.push(`/* Card Layout instance has no 'Contents' slot. */`)
           break
         }
-        
+
         const childrenCode: string[] = []
         for (const child of contentsSlot.children) {
           childrenCode.push(...await generateSAILFromNode(child, nestingLevel))
@@ -182,11 +182,11 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
 }
 
 async function generateFrameComponent(currentNode: FrameNode, code: string[], nestingLevel: number) {
-  if (currentNode.type === 'FRAME' 
-    && currentNode.children.length === 1 
-    && Array.isArray(currentNode.fills) && currentNode.fills.length === 0 
-    && Array.isArray(currentNode.strokes) && currentNode.strokes.length === 0 
-    && currentNode.paddingBottom === 0 && currentNode.paddingTop === 0 && currentNode.paddingLeft === 0 && currentNode.paddingRight === 0 
+  if (currentNode.type === 'FRAME'
+    && currentNode.children.length === 1
+    && Array.isArray(currentNode.fills) && currentNode.fills.length === 0
+    && Array.isArray(currentNode.strokes) && currentNode.strokes.length === 0
+    && currentNode.paddingBottom === 0 && currentNode.paddingTop === 0 && currentNode.paddingLeft === 0 && currentNode.paddingRight === 0
     && currentNode.effects.length === 0
   ) {
     code.push(...indentStringArray(await generateSAILFromNode(currentNode.children[0]), nestingLevel))
@@ -221,14 +221,16 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
 
     code.push(...indentStringArray(generateColumnsLayout(currentNode, childrenCode), nestingLevel))
 
-  } else if (await isCardLayoutFrame(currentNode)) {
-    const childrenCode: string[] = []
-
+  } else if (await isCardLayoutNode(currentNode)) {
+    const childrenCode: string[][] = []
     for (const child of currentNode.children) {
-      childrenCode.push(...await generateSAILFromNode(child, nestingLevel))
+      childrenCode.push(await generateSAILFromNode(child, nestingLevel))
     }
-
-    code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode), nestingLevel))
+    if (isFrameWithChildrenInHorizontalLayout(currentNode)) {
+      code.push(...indentStringArray(await generateCardWithHorizontalLayout(currentNode, childrenCode)))
+    } else {
+      code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode.flat()), nestingLevel))
+    }
 
   } else code.push(...["/* This frame's contents cannot be translated into SAIL code.", "   Make sure you're the Verato UI's design library components. */"])
 }

@@ -1,4 +1,4 @@
-import { toHexColor } from "../Utilities/rgbColorToHexColor"
+import { RGBAToHexColor, toHexColor } from "../Utilities/rgbColorToHexColor"
 
 export type SAILTextStyle = 'PLAIN' | 'EMPHASIS' | 'STRONG' | 'UNDERLINE' | 'STRIKETHROUGH'
 export const mapToSAILTextStyle = (figmaFontStyle: FontStyle): SAILTextStyle => {
@@ -20,8 +20,8 @@ export const mapToSAILTextSize = (size: number): SAILTextSize => {
     return 'EXTRA_LARGE'
 }
 
-export type SAILRichTextColor = 'STANDARD' | 'ACCENT' | 'POSITIVE' | 'NEGATIVE' | 'SECONDARY' | string 
-export const mapToSAILRichTextColor = (instanceNode: InstanceNode): SAILRichTextColor => { 
+export type SAILRichTextColor = 'STANDARD' | 'ACCENT' | 'POSITIVE' | 'NEGATIVE' | 'SECONDARY' | string
+export const mapToSAILRichTextColor = (instanceNode: InstanceNode): SAILRichTextColor => {
     let richTextColor: SAILRichTextColor = 'STANDARD'
 
     if (instanceNode.type === 'INSTANCE') {
@@ -40,6 +40,9 @@ export const mapToSAILTextAlign = (figmaTextAlignHorizontal: string): SAILTextAl
         case 'CENTER': return 'CENTER'
         case 'RIGHT': return 'RIGHT'
         case 'JUSTIFIED': return 'LEFT'
+        // Values from counterAxisAlignItems
+        case 'MIN': return 'LEFT'
+        case 'MAX': return 'RIGHT'
         default: return 'LEFT'
     }
 }
@@ -192,7 +195,7 @@ export const mapToSAILCardShape = (figmaCardShape: string | number): SAILCardSha
             case 'Squared': return 'SQUARED'
             default: return 'ROUNDED'
         }
-    } 
+    }
     if (figmaCardShape === 0) return 'SQUARED'
     if (figmaCardShape < 8) return 'SEMI_ROUNDED'
     return 'ROUNDED'
@@ -226,6 +229,22 @@ export const mapToSAILCardDecorativeBarColor = (figmaDecorativeBarColor: string 
         return hexColor
     }
     return 'STANDARD'
+}
+
+export type SAILCardBorderColor = 'STANDARD' | 'ACCENT' | 'POSITIVE' | 'WARN' | 'NEGATIVE' | 'INFO' | string
+export const mapToSAILCardBorderColor = (borderColor: string | RGBA): SAILCardBorderColor => {
+    switch (borderColor) {
+        case 'Standard': return 'STANDARD'
+        case 'Info': return 'INFO'
+        case 'Warn': return 'WARN'
+        case 'Accent': return 'ACCENT'
+        case 'Error': return 'NEGATIVE'
+        case 'Success': return 'POSITIVE'
+        default: break
+    }
+    if (typeof borderColor !== 'string') {
+        return RGBAToHexColor(borderColor)
+    } else return 'STANDARD'
 }
 
 export type SAILPadding = 'NONE' | 'EVEN_LESS' | 'LESS' | 'STANDARD' | 'MORE' | 'EVEN_MORE'
@@ -360,7 +379,7 @@ export const mapToSAILColumnWidth = (columnGap: GridTrackSize | number): SAILCol
         const fractionalUnits = Math.min(Math.max(Math.round(columnGap.value ?? 1), 1), 10)
         return `${fractionalUnits}X` as SAILColumnWidth
     }
-    
+
     if (columnGap.type === 'HUG') return 'AUTO'
 
     return 'AUTO'

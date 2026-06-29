@@ -84,7 +84,7 @@ export const generateColumnsLayout = (frameNode: FrameNode, childrenCode: string
                     marginBelow: mapToSAILMargin(frameNode.paddingBottom),
                 }), 1))
         }
-        rows.push(`}`)
+        rows.push(`},`)
         return rows
     } else {
         spacing = mapToSAILColumnsLayoutSpacing(frameNode.itemSpacing)

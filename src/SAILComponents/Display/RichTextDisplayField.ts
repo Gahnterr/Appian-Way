@@ -126,51 +126,71 @@ export const generateSingleRichTextIcon = async (instanceNode: InstanceNode): Pr
 }
 
 export const generateRichTextDisplayField = async (node: TextNode | FrameNode): Promise<string[]> => {
-    const children: readonly SceneNode[] = node.type === 'TEXT' ? [node] : node.children
     const richTextValues: (RichTextItem | RichTextIcon)[] = []
+    let layoutMode = ''
     let align: SAILTextAlign = 'LEFT'
     let alignResolved = false
     let preventWrapping = false
     let marginAbove: SAILMargin = 'NONE'
     let marginBelow: SAILMargin = 'NONE'
     if (node.type === 'FRAME') {
+        layoutMode = node.layoutMode
         marginAbove = mapToSAILMargin(node.paddingTop)
-        marginBelow = mapToSAILMargin(node.itemSpacing)
+        marginBelow = mapToSAILMargin(node.paddingBottom)
     }
-    const addHorizontalSpace = () => {
-        if (node.type === 'FRAME') {
-            const space = ' '
-            const spacer = RichTextItem({ text: space.repeat(node.itemSpacing) })
-            if (node.type === 'FRAME') {
-                richTextValues.push(spacer)
-            }
-        }
-    }
-    
-    // Handle each child in Frame Node
-    for (const [index, child] of children.entries()) {
-        if (child.type === 'TEXT') {
-            if (!alignResolved) {
-                align = mapToSAILTextAlign(child.textAlignHorizontal)
-                alignResolved = true
-            }
-            preventWrapping = child.textTruncation === 'ENDING'
 
-            generateTextFromTextNode(child)
-            if (index < children.length - 1) richTextValues.push(Char(10))
-        } else if (child.type === 'INSTANCE') {
-            richTextValues.push(await generateRichTextIcon(child))
-        } else if (child.type === 'FRAME') {
-            const firstChild = child.children[0]
-            if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
-                richTextValues.push(await generateRichTextIcon(firstChild))
+    if (node.type === 'FRAME' && layoutMode === 'HORIZONTAL') await handleHorizontalChildren()
+    else if (node.type === 'FRAME' && layoutMode === 'VERTICAL') await handleVerticalChildren()
+    else if (node.type === 'TEXT') generateTextFromTextNode(node)
+
+    async function handleHorizontalChildren() {
+        if (node.type !== 'FRAME') return
+        const children = node.children
+        for (const child of children) {
+            if (child.type === 'TEXT') {
+                if (!alignResolved) {
+                    align = mapToSAILTextAlign(child.textAlignHorizontal)
+                    alignResolved = true
+                }
+                preventWrapping = child.textTruncation === 'ENDING'
+
+                generateTextFromTextNode(child)
+            } else if (child.type === 'INSTANCE') {
+                richTextValues.push(await generateRichTextIcon(child))
                 addHorizontalSpace()
+            } else if (child.type === 'FRAME') {
+                const firstChild = child.children[0]
+                if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
+                    richTextValues.push(await generateRichTextIcon(firstChild))
+                    addHorizontalSpace()
+
+                }
             }
         }
     }
-
-    function generateTextFromTextNode(childNode: TextNode) {
-        const styledTextSegments = childNode.getStyledTextSegments(['fontStyle', 'fontWeight', 'textDecoration', 'fills', 'fontSize'])
+    async function handleVerticalChildren() {
+        if (node.type !== 'FRAME') return
+        const children = node.children
+        for (const [index, child] of children.entries()) {
+            if (child.type === 'TEXT') {
+                align = mapToSAILTextAlign(node.counterAxisAlignItems)
+                preventWrapping = child.textTruncation === 'ENDING'
+                generateTextFromTextNode(child)
+                if (index < children.length - 1) richTextValues.push(Char(10))
+            } else if (child.type === 'INSTANCE') {
+                richTextValues.push(await generateRichTextIcon(child))
+                richTextValues.push(Char(10))
+            } else if (child.type === 'FRAME') {
+                const firstChild = child.children[0]
+                if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
+                    richTextValues.push(await generateRichTextIcon(firstChild))
+                    richTextValues.push(Char(10))
+                }
+            }
+        }
+    }
+    function generateTextFromTextNode(textNode: TextNode) {
+        const styledTextSegments = textNode.getStyledTextSegments(['fontStyle', 'fontWeight', 'textDecoration', 'fills', 'fontSize'])
         for (const textSegment of styledTextSegments) {
             const { characters, fontStyle, fontWeight, textDecoration, fills, fontSize } = textSegment
             const textLines = characters.split('\n')
@@ -198,9 +218,18 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
             }
         }
     }
+    function addHorizontalSpace() {
+        if (node.type === 'FRAME') {
+            const space = ' '
+            const spacer = RichTextItem({ text: space.repeat(node.itemSpacing) })
+            if (node.type === 'FRAME') {
+                richTextValues.push(spacer)
+            }
+        }
+    }
 
     return RichTextDisplayField({
-        align: align,
+        align,
         preventWrapping: preventWrapping,
         value: richTextValues,
         marginAbove,

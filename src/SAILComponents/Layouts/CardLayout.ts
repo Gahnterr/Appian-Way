@@ -1,7 +1,9 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
+import { getLastFillFromNode, getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
-import { SAILCardHeight, SAILCardStyle, SAILMargin, SAILPadding, SAILCardShape, SAILCardDecorativeBarPosition, SAILCardDecorativeBarColor, mapToSAILCardHeight, mapToSAILCardStyle, mapToSAILMargin, mapToSAILPadding, mapToSAILCardDecorativeBarColor, mapToSAILCardDecorativeBarPosition, mapToSAILCardShape } from "../SAILParameters"
+import { SAILCardHeight, SAILCardStyle, SAILMargin, SAILPadding, SAILCardShape, SAILCardDecorativeBarPosition, SAILCardDecorativeBarColor, mapToSAILCardHeight, mapToSAILCardStyle, mapToSAILMargin, mapToSAILPadding, mapToSAILCardDecorativeBarColor, mapToSAILCardDecorativeBarPosition, mapToSAILCardShape, SAILCardBorderColor, mapToSAILCardBorderColor } from "../SAILParameters"
+import { generateSideBySideLayout } from "./SideBySideLayout"
 
 type CardLayout = {
     contents: string[]
@@ -15,6 +17,7 @@ type CardLayout = {
     shape?: SAILCardShape
     decorativeBarPosition?: SAILCardDecorativeBarPosition
     decorativeBarColor?: SAILCardDecorativeBarColor
+    borderColor?: SAILCardBorderColor
 }
 
 const CardLayout = ({
@@ -29,6 +32,7 @@ const CardLayout = ({
     shape,
     decorativeBarPosition,
     decorativeBarColor,
+    borderColor
 }: CardLayout): string[] => {
     const code: string[] = []
 
@@ -46,6 +50,7 @@ const CardLayout = ({
     code.push(`  shape: "${shape ?? 'ROUNDED'}",`)
     if (decorativeBarColor) code.push(`  decorativeBarColor: "${decorativeBarColor}",`)
     if (decorativeBarPosition) code.push(`  decorativeBarPosition: "${decorativeBarPosition}",`)
+    if (borderColor) code.push (`   borderColor: "${borderColor}"`)
     code.push(`),`)
     return code
 }
@@ -62,20 +67,22 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
     let padding: SAILPadding | undefined
     let decorativeBarColor: SAILCardDecorativeBarColor | undefined
     let decorativeBarPosition: SAILCardDecorativeBarPosition | undefined
+    let borderColor: SAILCardBorderColor | undefined
 
     switch (node.type) {
         case 'INSTANCE': {
-            const appliedModes = await getAppliedModes(node)
-            height = mapToSAILCardHeight(appliedModes['Height'])
-            style = mapToSAILCardStyle(appliedModes['Card Style'])
-            showBorder = appliedModes['Show Border'] === 'Yes'
-            showShadow = appliedModes['Show Shadow'] === 'Yes'
-            marginAbove = mapToSAILMargin(appliedModes['Margin Above'])
-            marginBelow = mapToSAILMargin(appliedModes['Margin Below'])
-            padding = mapToSAILPadding(appliedModes['Padding'])
-            decorativeBarColor = mapToSAILCardDecorativeBarColor(appliedModes['Decorative Bar Color'])
-            decorativeBarPosition = mapToSAILCardDecorativeBarPosition(appliedModes['Decorative Bar Position'])
-            shape = mapToSAILCardShape(appliedModes['Shape'])
+            const modes = await getAppliedModes(node)
+            height = mapToSAILCardHeight(modes['Height'])
+            style = mapToSAILCardStyle(modes['Card Style'])
+            showBorder = modes['Show Border'] === 'Yes'
+            showShadow = modes['Show Shadow'] === 'Yes'
+            marginAbove = mapToSAILMargin(modes['Margin Above'])
+            marginBelow = mapToSAILMargin(modes['Margin Below'])
+            padding = mapToSAILPadding(modes['Padding'])
+            decorativeBarColor = mapToSAILCardDecorativeBarColor(modes['Decorative Bar Color'])
+            decorativeBarPosition = mapToSAILCardDecorativeBarPosition(modes['Decorative Bar Position'])
+            shape = mapToSAILCardShape(modes['Shape'])
+            borderColor = mapToSAILCardBorderColor(modes['Card Border Color'])
         }; break
         case 'FRAME': {
             height = node.layoutSizingVertical === 'HUG' ? 'AUTO' : mapToSAILCardHeight(node.height)
@@ -91,6 +98,7 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
             } else {
                 shape = mapToSAILCardShape(Math.max(node.topLeftRadius, node.topRightRadius, node.bottomLeftRadius, node.bottomRightRadius))
             }
+            borderColor = mapToSAILCardBorderColor(getLastStrokeFromNode(node))
         }; break
         default: break
     }
@@ -107,10 +115,10 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
         shape,
         decorativeBarColor,
         decorativeBarPosition,
+        borderColor
     })
 }
-
-export const isCardLayoutFrame = async (node: FrameNode | InstanceNode): Promise<boolean> => {
+export const isCardLayoutNode = async (node: FrameNode | InstanceNode): Promise<boolean> => {
     if (node.type === 'INSTANCE') return await getMainComponentName(node) === 'Card Layout'
 
     if (node.type === 'FRAME') {
@@ -121,4 +129,18 @@ export const isCardLayoutFrame = async (node: FrameNode | InstanceNode): Promise
     }
 
     return false
+}
+
+export const generateCardWithHorizontalLayout = async (node: FrameNode, childrenCode: string[][]): Promise<string[]> => {
+    const code: string[] = []
+    const contents: string[] = []
+    
+    contents.push(...generateSideBySideLayout(node, childrenCode))
+
+    code.push(...await generateCardLayout(node, contents))
+    return code
+}
+export const isFrameWithChildrenInHorizontalLayout = (node: FrameNode): boolean => {
+    return node.layoutMode === 'HORIZONTAL' 
+        && Array.isArray(node.children) && node.children.length > 1
 }
