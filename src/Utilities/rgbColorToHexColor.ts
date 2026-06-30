@@ -52,3 +52,7 @@ export const toHexColor = (r: number, g: number, b: number, a?: number): string 
 export const RGBAToHexColor = (color: RGBA): string => {
     return toHexColor(color.r, color.g, color.b, color.a)
 }
+
+export const RGBToHexColor = (color: RGB): string => {
+    return toHexColor(color.r, color.g, color.b)
+}

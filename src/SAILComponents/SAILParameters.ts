@@ -404,11 +404,11 @@ export type SAILImageSize = 'ICON' | 'ICON_PLUS' | 'TINY' | 'EXTRA_SMALL' | 'SMA
 export type SAILStampSize = 'TINY' | 'SMALL' | 'MEDIUM' | 'LARGE'
 export const mapToSAILStampSize = (figmaStampSize: string): SAILStampSize => {
     switch (figmaStampSize) {
-        case 'Tiny': return 'TINY'; break
-        case 'Small': return 'SMALL'; break
-        case 'Medium': return 'MEDIUM'; break
-        case 'Large': return 'LARGE'; break
-        default: return 'TINY'; break
+        case 'Tiny': return 'TINY'
+        case 'Small': return 'SMALL'
+        case 'Medium': return 'MEDIUM'
+        case 'Large': return 'LARGE'
+        default: return 'TINY'
     }
 }
 

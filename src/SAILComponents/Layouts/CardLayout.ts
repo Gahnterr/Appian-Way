@@ -1,5 +1,5 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { getLastFillFromNode, getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
+import getLastFillFromNode, { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
 import { SAILCardHeight, SAILCardStyle, SAILMargin, SAILPadding, SAILCardShape, SAILCardDecorativeBarPosition, SAILCardDecorativeBarColor, mapToSAILCardHeight, mapToSAILCardStyle, mapToSAILMargin, mapToSAILPadding, mapToSAILCardDecorativeBarColor, mapToSAILCardDecorativeBarPosition, mapToSAILCardShape, SAILCardBorderColor, mapToSAILCardBorderColor } from "../SAILParameters"

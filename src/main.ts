@@ -3,6 +3,7 @@ import { generateHorizontalLine } from "./SAILComponents/Display/HorizontalLine"
 import { generateImageField, isImageField } from "./SAILComponents/Display/ImageField"
 import { generateRichTextDisplayField, generateSingleRichTextIcon, isRichTextDisplayFieldFrame } from "./SAILComponents/Display/RichTextDisplayField"
 import { generateStampField } from "./SAILComponents/Display/StampField"
+import { generateTagField, generateTagItem } from "./SAILComponents/Display/TagField"
 import { generateDateTimeField } from "./SAILComponents/Inputs/DateTimeField"
 import { generateParagraphField } from "./SAILComponents/Inputs/ParagraphField"
 import { generateTextField } from "./SAILComponents/Inputs/TextField"
@@ -144,6 +145,14 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       case 'Segmented Controller':
         addToCode(await generateSegmentedController(currentNode))
         break
+      case 'Tag Field': {
+        addToCode(await generateTagField(currentNode))
+        break
+      }
+      case 'Tag Item': {
+        addToCode(await generateTagItem(currentNode))
+        break
+      }
       case 'Section': {
         const contentsSlot = getContentsSlotNodeFrom(currentNode, code)
         if (!contentsSlot) break

@@ -1,5 +1,8 @@
-export const getLastFillFromNode = (node?: FrameNode | InstanceNode | RectangleNode | TextNode, includeOpacity = true): RGBA | RGB => {
+export function getLastFillFromNode(node: FrameNode | InstanceNode | RectangleNode | TextNode | null | undefined, includeOpacity: true): RGBA
+export function getLastFillFromNode(node: FrameNode | InstanceNode | RectangleNode | TextNode | null | undefined, includeOpacity: false): RGB
+export function getLastFillFromNode(node: FrameNode | InstanceNode | RectangleNode | TextNode | null | undefined, includeOpacity = true): RGBA | RGB {
     let resultingColor: RGB | RGBA = { r: 1, g: 0, b: 1 }
+    if (node === undefined || node === null) return resultingColor as RGB
     if (node !== undefined && Array.isArray(node.fills) && node.fills.length > 0) {
         const solidFills = node.fills.filter((fill): fill is SolidPaint => fill.type === 'SOLID')
         const lastFill = solidFills.length > 0 ? solidFills[solidFills.length - 1] : null
@@ -10,7 +13,7 @@ export const getLastFillFromNode = (node?: FrameNode | InstanceNode | RectangleN
     }
 
     if (!includeOpacity) {
-        const removedOpacity = { r: resultingColor.r, g: resultingColor.g, b: resultingColor.b }        
+        const removedOpacity = { r: resultingColor.r, g: resultingColor.g, b: resultingColor.b }
         return removedOpacity as RGB
     }
 
