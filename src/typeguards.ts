@@ -11,7 +11,7 @@ export const isSlotNode = (node: SceneNode | undefined): node is SlotNode => {
     && node?.type === 'SLOT' 
 }
 
-export const isFrameNode = (node: SceneNode): node is FrameNode => {
+export const isFrameNode = (node: SceneNode | undefined | null): node is FrameNode => {
     return node?.type === 'FRAME' 
     && node !== null 
     && node !== undefined

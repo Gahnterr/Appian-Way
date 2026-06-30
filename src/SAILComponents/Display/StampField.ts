@@ -1,7 +1,11 @@
+import { isFrameNode, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import { __getMainComponentName, getMainComponentName } from "../../Utilities/getMainComponentName"
-import { toHexColor } from "../../Utilities/rgbColorToHexColor"
-import { mapToSAILMargin, mapToSAILStampSize, SAILIcon, SAILMargin, SAILStampSize } from "../SAILParameters"
+import { getComponentProps } from "../../Utilities/getComponentProps"
+import { getIconNameById } from "../../Utilities/getIconNameById"
+import { getLastFillFromNode } from "../../Utilities/getLast__FromNode"
+import { getMainComponentName } from "../../Utilities/getMainComponentName"
+import { RGBToHexColor, toHexColor } from "../../Utilities/rgbColorToHexColor"
+import { isSAILIcon, mapToSAILIcon, mapToSAILMargin, mapToSAILStampSize, SAILIcon, SAILMargin, SAILStampSize } from "../SAILParameters"
 
 type StampFieldProps = {
     icon?: SAILIcon
@@ -34,44 +38,24 @@ const StampField = ({
 }
 
 export const generateStampField = async (instanceNode: InstanceNode): Promise<string[]> => {
-    const appliedModes = await getAppliedModes(instanceNode)
-    const textProp = instanceNode.componentProperties['Text#1042:0'].value as string
-    const typeProp = instanceNode.componentProperties['Type'].value as string
-    const iconNodeId = instanceNode.componentProperties['Icon#807:25'].value as string
-    let icon: SAILIcon | undefined
-    let text: string | undefined
-
-    switch (typeProp) {
-        case 'Text Only': {
-            text = textProp as string
-        }; break
-        case 'Icon Only': {
-            const iconNode = await figma.getNodeByIdAsync(iconNodeId)
-            icon = iconNode?.name as SAILIcon
-        }; break
-        case 'Icon + Text': {
-            text = textProp
-            const iconNode = await figma.getNodeByIdAsync(iconNodeId)
-            icon = iconNode?.name as SAILIcon
-        }; break
-        default: break
-    }
+    const props = getComponentProps(instanceNode)
+    const modes = await getAppliedModes(instanceNode)
 
     let backgroundColor = 'ACCENT'
-    const stampFrame = instanceNode.findOne(node => node.name === 'Stamp' && node.type === 'FRAME')
-    if (stampFrame) {
-        const fill: RGB = stampFrame.type === 'FRAME' && Array.isArray(stampFrame.fills)
-            ? stampFrame.fills[0].color
-            : {r: 0, g: 0, b: 0}
-        backgroundColor = toHexColor(fill.r, fill.g, fill.b)
+    const stampFrame = instanceNode.findChild(node => node.name === 'Stamp' && node.type === 'FRAME')
+    if (stampFrame && isFrameNode(stampFrame)) {
+        const stampFrameLastFill: RGB = getLastFillFromNode(stampFrame, true)
+        backgroundColor = RGBToHexColor(stampFrameLastFill)
     }
 
-    const size: SAILStampSize = mapToSAILStampSize(appliedModes['Stamp Size'])
-    const marginAbove: SAILMargin = mapToSAILMargin(appliedModes['Margin Above'])
-    const marginBelow: SAILMargin = mapToSAILMargin(appliedModes['Margin Below'])
-
     return StampField({
-        icon, text, backgroundColor, contentColor: 'STANDARD', size, marginAbove, marginBelow
+        icon: mapToSAILIcon(stringProp(props['Icon']?.value)),
+        text: stringProp(props['Text']?.value), 
+        backgroundColor, 
+        contentColor: 'STANDARD', 
+        size: mapToSAILStampSize(modes['Stamp Size']), 
+        marginAbove: mapToSAILMargin(modes['Margin Above']), 
+        marginBelow: mapToSAILMargin(modes['Margin Below'])
     })
 }
 

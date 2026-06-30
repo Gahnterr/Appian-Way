@@ -1,3 +1,5 @@
+import { isInstanceNode } from "../typeguards"
+import { getMainComponentName } from "../Utilities/getMainComponentName"
 import { RGBAToHexColor, toHexColor } from "../Utilities/rgbColorToHexColor"
 
 export type SAILTextStyle = 'PLAIN' | 'EMPHASIS' | 'STRONG' | 'UNDERLINE' | 'STRIKETHROUGH'
@@ -1641,3 +1643,7 @@ const iconNames = [
 
 export type SAILIcon = typeof iconNames[number]
 export const isSAILIcon = (value: unknown): value is SAILIcon => iconNames.some((icon) => icon === value)
+export const mapToSAILIcon = (iconName: string): SAILIcon => {
+    if (isSAILIcon(iconName)) return iconName
+    else return ''
+}
