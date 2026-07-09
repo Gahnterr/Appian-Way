@@ -1,6 +1,5 @@
-import { isInstanceNode } from "../typeguards"
-import { getMainComponentName } from "../Utilities/getMainComponentName"
-import { RGBAToHexColor, toHexColor } from "../Utilities/rgbColorToHexColor"
+import { getLastFillFromNode, getLastStrokeFromNode } from "../Utilities/getLast__FromNode"
+import { RGBAToHexColor, RGBToHexColor, toHexColor } from "../Utilities/rgbColorToHexColor"
 
 export type SAILTextStyle = 'PLAIN' | 'EMPHASIS' | 'STRONG' | 'UNDERLINE' | 'STRIKETHROUGH'
 export const mapToSAILTextStyle = (figmaFontStyle: FontStyle): SAILTextStyle => {
@@ -27,11 +26,12 @@ export const mapToSAILRichTextColor = (instanceNode: InstanceNode): SAILRichText
     let richTextColor: SAILRichTextColor = 'STANDARD'
 
     if (instanceNode.type === 'INSTANCE') {
-        const vectorLayer: VectorNode = instanceNode.findChild(child => child.type === 'VECTOR') as VectorNode
-        const colors: RGB[] = vectorLayer?.fills !== figma.mixed ? vectorLayer?.fills.map(fill => fill.type === 'SOLID' && fill.color) as RGB[] : []
-        const color: RGB = colors[colors.length - 1]
-        richTextColor = toHexColor(color.r, color.g, color.b)
-    } else throw new Error(`Did not pass an instance node during mapToSAILRichTextColor. Node that caused the error: ${instanceNode.id}`)
+        const vectorLayer = instanceNode.findChild(child => child.type === 'VECTOR')
+        if (vectorLayer !== undefined && vectorLayer !== null && vectorLayer.type === 'VECTOR' && Array.isArray(vectorLayer.fills) && vectorLayer.fills.length > 0) {
+            const vectorLayerLastFill = getLastFillFromNode(vectorLayer, false)
+            richTextColor = vectorLayerLastFill ? RGBToHexColor(vectorLayerLastFill) : 'STANDARD'
+        }
+    } else throw new Error(`Did not pass an instance node during mapToSAILRichTextColor.`)
     return richTextColor
 }
 
@@ -166,7 +166,7 @@ export const mapToSAILCardHeight = (figmaFrameHeight: number | string): SAILCard
 }
 
 export type SAILCardStyle = 'NONE' | 'TRANSPARENT' | 'STANDARD' | 'ACCENT' | 'SUCCESS' | 'INFO' | 'WARN' | 'ERROR' | string
-export const mapToSAILCardStyle = (figmaCardStyle: string | Paint): SAILCardStyle => {
+export const mapToSAILCardStyle = (figmaCardStyle: string | RGBA | undefined): SAILCardStyle => {
     if (typeof figmaCardStyle === 'string') {
         switch (figmaCardStyle) {
             case 'None': return 'NONE'
@@ -179,14 +179,10 @@ export const mapToSAILCardStyle = (figmaCardStyle: string | Paint): SAILCardStyl
             case 'Error': return 'ERROR'
             default: return 'NONE'
         }
-    } else if (figmaCardStyle.type === 'SOLID') {
-        const { r, g, b } = figmaCardStyle.color
-        const opacity = figmaCardStyle.opacity
-        const hexColor: string = toHexColor(r, g, b, opacity)
+    } else if (figmaCardStyle !== undefined) {
         // TODO: map colors to closest SAIL card style or return hex code if no close match
-        return hexColor
-    }
-    return 'NONE'
+        return RGBAToHexColor(figmaCardStyle)
+    } else return 'TRANSPARENT'
 }
 
 export type SAILCardShape = 'ROUNDED' | 'SQUARED' | 'SEMI_ROUNDED'
@@ -207,15 +203,19 @@ export type SAILCardDecorativeBarPosition = 'TOP' | 'BOTTOM' | 'START' | 'END' |
 export const mapToSAILCardDecorativeBarPosition = (figmaDecorativeBarPosition: string): SAILCardDecorativeBarPosition => {
     switch (figmaDecorativeBarPosition) {
         case 'Top': return 'TOP'
+        case 'top': return 'TOP'
         case 'Bottom': return 'BOTTOM'
+        case 'bottom': return 'BOTTOM'
         case 'Left': return 'START'
+        case 'left': return 'START'
         case 'Right': return 'END'
+        case 'right': return 'END'
         default: return 'NONE'
     }
 }
 
 export type SAILCardDecorativeBarColor = 'ACCENT' | 'POSITIVE' | 'WARN' | 'NEGATIVE' | 'INFO' | string
-export const mapToSAILCardDecorativeBarColor = (figmaDecorativeBarColor: string | Paint): SAILCardDecorativeBarColor => {
+export const mapToSAILCardDecorativeBarColor = (figmaDecorativeBarColor: string | RGBA): SAILCardDecorativeBarColor => {
     if (typeof figmaDecorativeBarColor === 'string') {
         switch (figmaDecorativeBarColor) {
             case 'Accent': return 'ACCENT'
@@ -225,16 +225,15 @@ export const mapToSAILCardDecorativeBarColor = (figmaDecorativeBarColor: string 
             case 'Info': return 'INFO'
             default: return 'ACCENT'
         }
-    } else if (figmaDecorativeBarColor.type === 'SOLID') {
-        const { r, g, b } = figmaDecorativeBarColor.color
-        const hexColor: string = toHexColor(r, g, b)
+    } else {
+        const hexColor: string = RGBToHexColor(figmaDecorativeBarColor)
         return hexColor
     }
-    return 'STANDARD'
 }
 
 export type SAILCardBorderColor = 'STANDARD' | 'ACCENT' | 'POSITIVE' | 'WARN' | 'NEGATIVE' | 'INFO' | string
-export const mapToSAILCardBorderColor = (borderColor: string | RGBA): SAILCardBorderColor => {
+export const mapToSAILCardBorderColor = (borderColor: string | RGBA | undefined): SAILCardBorderColor => {
+    if (borderColor === undefined) return 'TRANSPARENT'
     switch (borderColor) {
         case 'Standard': return 'STANDARD'
         case 'Info': return 'INFO'
@@ -1647,3 +1646,4 @@ export const mapToSAILIcon = (iconName: string): SAILIcon => {
     if (isSAILIcon(iconName)) return iconName
     else return ''
 }
+

@@ -1,3 +1,5 @@
+import { isInstanceNode } from "../../typeguards"
+import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { SAILDropdownSearchDisplay, SAILLabelPosition, SAILMargin } from "./SAILParameters"
 
 export type MultipleDropdownField = {
@@ -35,4 +37,9 @@ export const MultipleDropdownField = ({ label, labelPosition, instructions, requ
     code.push(`),`)
 
     return code
+}
+
+export const isMultipleDropdownFieldInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
+    const instanceMainComponentName = await getMainComponentName(instanceNode)
+    return instanceMainComponentName === 'Multiple Dropdown'
 }

@@ -49,18 +49,16 @@ if (figma.mode === 'codegen') {
   figma.showUI(__html__, { width: 800, height: 600, title: 'Appian Way' })
 }
 
-async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel: number = 0): Promise<string[]> {
+async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel: number = 0, isSideBySideContent = false): Promise<string[]> {
   const code: string[] = []
 
   const addToCode = async (generate: string[]): Promise<void> => {
     code.push(...indentStringArray(generate, nestingLevel))
   }
-
   code.push(...indent(`/* ${currentNode?.name} */`, nestingLevel))
-
   switch (currentNode?.type) {
     case 'FRAME': {
-      await generateFrameComponent(currentNode, code, nestingLevel)
+      await generateFrameComponent(currentNode, code, nestingLevel, isSideBySideContent)
       break
     }
     case 'LINE': {
@@ -85,16 +83,24 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
       addToCode(await generateRichTextDisplayField(currentNode))
       break
     case 'INSTANCE': {
-      await generateInstanceComponent(currentNode, addToCode, code, nestingLevel)
+      await generateInstanceComponent(currentNode, addToCode, code, nestingLevel, isSideBySideContent)
       break
     }
     case 'SLOT': {
       code.splice(code.length - 1) // Prevents duplicate layer names in the generated code.
       code.push(`{`)
-      const slotContents = currentNode.children
-      for (const node of slotContents) {
-        await addToCode(await generateSAILFromNode(node, nestingLevel + 1))
-      }
+      if (currentNode.layoutMode === 'GRID') {
+        const childrenCode: string[][] = []
+        for (const child of currentNode.children) {
+          childrenCode.push(await generateSAILFromNode(child, nestingLevel))
+        }
+        await addToCode(generateColumnsLayout(currentNode, childrenCode))
+      } else {
+        const slotContents = currentNode.children
+        for (const node of slotContents) {
+          await addToCode(await generateSAILFromNode(node, nestingLevel + 1))
+        }
+    }
       code.push(`},`)
       break
     }
@@ -103,7 +109,7 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
   return code
 }
 
-async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (generate: string[]) => Promise<void>, code: string[], nestingLevel: number) {
+async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (generate: string[]) => Promise<void>, code: string[], nestingLevel: number, isSideBySideContent?: boolean) {
   if (isSAILIcon(currentNode.name)) {
     addToCode(await generateSingleRichTextIcon(currentNode))
   } else {
@@ -184,20 +190,14 @@ async function generateInstanceComponent(currentNode: InstanceNode, addToCode: (
       default:
         code.splice(code.length - 1) // Prevents duplicate layer names in the generated code.
         code.push(`/* The following instance is not recognized as a supported SAIL component and is being treated as a regular Frame: */`)
-        addToCode(await generateSAILFromNode(convertToFrameNode(currentNode)))
+        addToCode(await generateSAILFromNode(convertToFrameNode(currentNode), nestingLevel, isSideBySideContent))
         break
     }
   }
 }
 
-async function generateFrameComponent(currentNode: FrameNode, code: string[], nestingLevel: number) {
-  if (currentNode.type === 'FRAME'
-    && currentNode.children.length === 1
-    && Array.isArray(currentNode.fills) && currentNode.fills.length === 0
-    && Array.isArray(currentNode.strokes) && currentNode.strokes.length === 0
-    && currentNode.paddingBottom === 0 && currentNode.paddingTop === 0 && currentNode.paddingLeft === 0 && currentNode.paddingRight === 0
-    && currentNode.effects.length === 0
-  ) {
+async function generateFrameComponent(currentNode: FrameNode, code: string[], nestingLevel: number, isSideBySideContent = false) {
+  if (isUselessFrame(currentNode)) {
     code.push(...indentStringArray(await generateSAILFromNode(currentNode.children[0]), nestingLevel))
   } else if (await isButtonArrayFrame(currentNode)) {
     code.push(...indentStringArray(await generateButtonArrayLayout(currentNode), nestingLevel))
@@ -207,12 +207,12 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
     const childrenCode: string[][] = []
 
     for (const child of currentNode.children) {
-      childrenCode.push(await generateSAILFromNode(child, nestingLevel))
+      childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
     }
 
     code.push(...indentStringArray(generateSideBySideLayout(currentNode, childrenCode), nestingLevel))
 
-  } else if (isColumnsLayoutFrame(currentNode)) {
+  } else if (isColumnsLayoutFrame(currentNode) && !isSideBySideContent) {
     const childrenCode: string[][] = []
     const isGridLayout = currentNode.layoutMode === 'GRID'
 
@@ -230,18 +230,31 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
 
     code.push(...indentStringArray(generateColumnsLayout(currentNode, childrenCode), nestingLevel))
 
-  } else if (await isCardLayoutNode(currentNode)) {
-    const childrenCode: string[][] = []
-    for (const child of currentNode.children) {
-      childrenCode.push(await generateSAILFromNode(child, nestingLevel))
-    }
+  } else if (await isCardLayoutNode(currentNode) && !isSideBySideContent) {
     if (isFrameWithChildrenInHorizontalLayout(currentNode)) {
+      const childrenCode: string[][] = []
+      for (const child of currentNode.children) {
+        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
+      }
       code.push(...indentStringArray(await generateCardWithHorizontalLayout(currentNode, childrenCode)))
     } else {
+      const childrenCode: string[][] = []
+      for (const child of currentNode.children) {
+        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel))
+      }
       code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode.flat()), nestingLevel))
     }
 
-  } else code.push(...["/* This frame's contents cannot be translated into SAIL code.", "   Make sure you're the Verato UI's design library components. */"])
+  } else code.push(...["/* This frame's contents cannot be translated into SAIL code.", "   Ensure valid and updated Verato UI design library components are being used. */"])
+}
+
+function isUselessFrame(currentNode: FrameNode) {
+  return currentNode.type === 'FRAME'
+    && currentNode.children.length === 1
+    && Array.isArray(currentNode.fills) && currentNode.fills.length === 0
+    && Array.isArray(currentNode.strokes) && currentNode.strokes.length === 0
+    && currentNode.paddingBottom === 0 && currentNode.paddingTop === 0 && currentNode.paddingLeft === 0 && currentNode.paddingRight === 0
+    && currentNode.effects.length === 0
 }
 
 function getContentsSlotNodeFrom(node: InstanceNode, code: string[]): SlotNode | undefined {

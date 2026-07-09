@@ -52,9 +52,9 @@ export const generateDropdownField = async (instanceNode: InstanceNode): Promise
         required: props['Is Required'].value as boolean,
         disabled: modes['Is Disabled'] === 'Yes',
         choiceLabels: props['Has Value'].value ? [stringProp(props['Value'].value)] : undefined,
-        choiceValues: [0],
+        choiceValues: props['Has Value']?.value === true ? [0] : undefined,
         placeholder: props['Placeholder'].value as string | undefined,
-        value: 0,
+        value: props['Has Value']?.value === true ? 0 : undefined,
         helpTooltip: getTooltipValue(instanceNode, props),
         marginAbove: mapToSAILMargin(modes['Margin Above']),
         marginBelow: mapToSAILMargin(modes['Margin Below'])

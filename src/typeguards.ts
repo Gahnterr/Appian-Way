@@ -11,6 +11,12 @@ export const isSlotNode = (node: SceneNode | undefined): node is SlotNode => {
     && node?.type === 'SLOT' 
 }
 
+export const isTextNode = (node: SceneNode | undefined | null): node is TextNode => {
+    return node !== null 
+    && node !== undefined
+    && node?.type === 'TEXT' 
+}
+
 export const isFrameNode = (node: SceneNode | undefined | null): node is FrameNode => {
     return node?.type === 'FRAME' 
     && node !== null 
@@ -48,7 +54,7 @@ export const booleanProp = (value: string | boolean): boolean => {
     if (isBoolean(value)) return value
     else if (value === 'True' || value === 'Yes') return true
     else if (value === 'False' || value === 'No') return false
-    else throw new Error(`Received an invalid component prop value: ${value.toString()}`)
+    else throw new Error(`Received an invalid component prop value.`)
 }
 
 export const isInstanceNode = (node: SceneNode): node is InstanceNode => {
@@ -64,3 +70,9 @@ export const isInstanceNode = (node: SceneNode): node is InstanceNode => {
 //     ) return array 
 //     throw 
 // }
+
+export const isVectorNode = (node: SceneNode | null | undefined): node is VectorNode => {
+    return node?.type === 'LINE'
+    && node !== null 
+    && node !== undefined
+}

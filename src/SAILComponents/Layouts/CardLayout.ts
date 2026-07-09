@@ -1,7 +1,9 @@
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
-import getLastFillFromNode, { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
+import { getHeaviestStroke } from "../../Utilities/getHeaviestStroke"
+import { getLastFillFromNode, getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
+import { strokesAreSameWeight } from "../../Utilities/strokesAreSameWeight"
 import { SAILCardHeight, SAILCardStyle, SAILMargin, SAILPadding, SAILCardShape, SAILCardDecorativeBarPosition, SAILCardDecorativeBarColor, mapToSAILCardHeight, mapToSAILCardStyle, mapToSAILMargin, mapToSAILPadding, mapToSAILCardDecorativeBarColor, mapToSAILCardDecorativeBarPosition, mapToSAILCardShape, SAILCardBorderColor, mapToSAILCardBorderColor } from "../SAILParameters"
 import { generateSideBySideLayout } from "./SideBySideLayout"
 
@@ -57,7 +59,6 @@ const CardLayout = ({
 
 export const generateCardLayout = async (node: FrameNode | InstanceNode, contents: string[]): Promise<string[]> => {
     let height: SAILCardHeight | undefined
-    let lastFill: string = 'Transparent'
     let style: SAILCardStyle | undefined
     let showBorder: boolean = false
     let showShadow: boolean = false
@@ -72,8 +73,15 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
     switch (node.type) {
         case 'INSTANCE': {
             const modes = await getAppliedModes(node)
+            if (modes['Card Style']) {
+                style = mapToSAILCardStyle(modes['Card Style'])
+            } else {                
+                const cardNode = node.findChild(child => child.name === 'Card')
+                const cardFrameNode = cardNode && cardNode.type === 'FRAME' ? cardNode : undefined
+                const cardFrameLastFill = getLastFillFromNode(cardFrameNode, true)
+                style = mapToSAILCardStyle(cardFrameLastFill)
+            }
             height = mapToSAILCardHeight(modes['Height'])
-            style = mapToSAILCardStyle(modes['Card Style'])
             showBorder = modes['Show Border'] === 'Yes'
             showShadow = modes['Show Shadow'] === 'Yes'
             marginAbove = mapToSAILMargin(modes['Margin Above'])
@@ -85,9 +93,11 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
             borderColor = mapToSAILCardBorderColor(modes['Card Border Color'])
         }; break
         case 'FRAME': {
+            const strokeWeights = { top: node.strokeTopWeight, right: node.strokeRightWeight, bottom: node.strokeBottomWeight, left: node.strokeLeftWeight }
             height = node.layoutSizingVertical === 'HUG' ? 'AUTO' : mapToSAILCardHeight(node.height)
-            if (Array.isArray(node.fills) && node.fills.length > 0) lastFill = node.fills[node.fills.length - 1]
-            style = mapToSAILCardStyle(lastFill)
+            const lastFill = getLastFillFromNode(node, true)
+            const lastStroke = getLastStrokeFromNode(node)
+            style = lastFill ? mapToSAILCardStyle(lastFill) : undefined
             showBorder = node.strokes.length > 0 ? true : false
             showShadow = node.effects.some(effect => effect.type === 'DROP_SHADOW' && effect.visible && effect.radius > 0) ? true : false
             marginAbove = 'NONE'
@@ -98,25 +108,21 @@ export const generateCardLayout = async (node: FrameNode | InstanceNode, content
             } else {
                 shape = mapToSAILCardShape(Math.max(node.topLeftRadius, node.topRightRadius, node.bottomLeftRadius, node.bottomRightRadius))
             }
-            borderColor = mapToSAILCardBorderColor(getLastStrokeFromNode(node))
+            if (lastStroke !== undefined && strokesAreSameWeight(...Object.values(strokeWeights))) {
+                borderColor = lastStroke !== undefined ? mapToSAILCardBorderColor(lastStroke) : undefined
+            } else if (lastStroke !== undefined) {
+                borderColor = undefined
+                const heaviestStroke = getHeaviestStroke(strokeWeights)
+                if (heaviestStroke.weight > 1) {
+                    decorativeBarPosition = mapToSAILCardDecorativeBarPosition(heaviestStroke.position)
+                    decorativeBarColor = mapToSAILCardDecorativeBarColor(lastStroke)
+                }
+            }
         }; break
         default: break
     }
 
-    return CardLayout({
-        contents,
-        height,
-        style,
-        showBorder,
-        showShadow,
-        marginBelow,
-        marginAbove,
-        padding,
-        shape,
-        decorativeBarColor,
-        decorativeBarPosition,
-        borderColor
-    })
+    return CardLayout({ contents, height, style, showBorder, showShadow, marginBelow, marginAbove, padding, shape, decorativeBarColor, decorativeBarPosition, borderColor })
 }
 export const isCardLayoutNode = async (node: FrameNode | InstanceNode): Promise<boolean> => {
     if (node.type === 'INSTANCE') return await getMainComponentName(node) === 'Card Layout'

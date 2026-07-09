@@ -1,4 +1,4 @@
-import { SAILLabelPosition, SAILMargin, SAILTextAlign } from "./SAILParameters"
+import { SAILLabelPosition, SAILMargin, SAILTextAlign } from "../SAILParameters"
 
 export type IntegerField = {
     label?: string
@@ -13,6 +13,7 @@ export type IntegerField = {
     helpTooltip?: string
     marginAbove?: SAILMargin
     marginBelow?: SAILMargin
+
 }
 export const IntegerField = ({ label, labelPosition, instructions, required, disabled, readOnly, value, placeholder, align, helpTooltip, marginAbove, marginBelow }: IntegerField): string[] => {
     const code: string[] = []

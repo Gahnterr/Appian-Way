@@ -12,6 +12,12 @@ import { isImageField } from "../Display/ImageField"
 import { isHorizontalLineInstance } from "../Display/HorizontalLine"
 import { isCheckboxFieldInstance } from "../Selection/CheckboxField"
 import { isToggleFieldInstance } from "../Selection/ToggleField"
+import { isDateFieldInstance } from "../Inputs/DateField"
+import { isDateTimeFieldInstance } from "../Inputs/DateTimeField"
+import { isMultipleDropdownFieldInstance } from "../Selection/MultipleDropdownField"
+import { isSegmentedControllerInstance } from "../Selection/SegmentedController"
+import { isTagFieldInstance } from "../Display/TagField"
+import { isTextNode } from "../../typeguards"
 
 type SideBySideItem = {
     item: string[]
@@ -68,15 +74,28 @@ export const generateSideBySideLayout = (frameNode: FrameNode, childrenCode: str
 }
 
 export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boolean> => {
-    if (frameNode.layoutMode !== 'HORIZONTAL') return false
-    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0) return false
-    if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
-
-    for (const child of frameNode.children) {
-        return await isLayoutFrame(child) || await isValidComponentInstance(child) 
+    if ((Array.isArray(frameNode.fills) && frameNode.fills.length !== 0)
+        || (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0)
+        || (frameNode.paddingTop > 0 || frameNode.paddingBottom > 0 || frameNode.paddingLeft > 0 || frameNode.paddingRight > 0)) {
+        return false
     }
 
-    return true
+    if (frameNode.layoutMode === 'HORIZONTAL' || frameNode.layoutMode === 'VERTICAL') {
+        for (const child of frameNode.children) {
+            if (
+                await isLayoutFrame(child)
+                || await isSupportedInstanceNode(child)
+                || child.type === 'TEXT'
+                || child.type === 'RECTANGLE'
+                || child.type === 'VECTOR'
+                || child.type === 'LINE'
+            ) {
+                return true
+            }
+        }
+    }
+
+    return false
 }
 
 const isLayoutFrame = async (node: SceneNode): Promise<boolean> => {
@@ -84,21 +103,33 @@ const isLayoutFrame = async (node: SceneNode): Promise<boolean> => {
         || await isRichTextDisplayFieldFrame(node)
         || await isButtonArrayFrame(node)
         || isImageField(node)
+        || node.children.every(child => isTextNode(child))
 
     return false
 }
 
-const isValidComponentInstance = async (node: SceneNode): Promise<boolean> => {
-    if (node.type === 'INSTANCE') return await isStampFieldInstance(node)
-        || await isTextFieldInstance(node)
+const isSupportedInstanceNode = async (node: SceneNode): Promise<boolean> => {
+    if (node.type === 'INSTANCE') { 
+        // Input
+        return await isDateFieldInstance(node) 
+        || await isDateTimeFieldInstance(node)
         || await isParagraphFieldInstance(node)
-        || await isDropdownFieldInstance(node)
+        || await isTextFieldInstance(node)
+        // Selection
         || await isBooleanCheckboxFieldInstance(node)
-        || await isRadioButtonFieldInstance(node)
-        || await isRichTextIcon(node)
-        || await isHorizontalLineInstance(node)
         || await isCheckboxFieldInstance(node)
+        || isStampFieldInstance(node)
+        || await isDropdownFieldInstance(node)
+        || await isMultipleDropdownFieldInstance(node)
+        || await isRadioButtonFieldInstance(node)
+        || await isSegmentedControllerInstance(node)
         || await isToggleFieldInstance(node)
+        // Display
+        || await isHorizontalLineInstance(node)
+        || await isRichTextIcon(node)
+        || await isStampFieldInstance(node)
+        || await isTagFieldInstance(node)
+    }
 
     return false
 }

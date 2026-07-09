@@ -3,6 +3,7 @@ import { convertArrayToSAILList } from "../../Utilities/convertArrayToSAILList"
 import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getItemsFromSlot } from "../../Utilities/getComponentSlots"
 import { getIconNameById } from "../../Utilities/getIconNameById"
+import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { isSAILIcon, mapToSAILLabelPosition, mapToSAILMargin, SAILColumnWidth, SAILIcon, SAILLabelPosition, SAILMargin } from "../SAILParameters"
 
 type SegmentedControllerProps = {
@@ -80,4 +81,9 @@ export const generateSegmentedController = async (instanceNode: InstanceNode): P
         marginAbove: mapToSAILMargin(stringProp(props['Margin Above']?.value)),
         marginBelow: mapToSAILMargin(stringProp(props['Margin Below']?.value))
     })
+}
+
+export const isSegmentedControllerInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
+    const instanceMainComponentName = await getMainComponentName(instanceNode)
+    return instanceMainComponentName === 'Segmented Controller'
 }

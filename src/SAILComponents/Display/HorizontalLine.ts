@@ -3,20 +3,21 @@ import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getLastStrokeFromNode } from "../../Utilities/getLast__FromNode"
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
-import { toHexColor } from "../../Utilities/rgbColorToHexColor"
+import { RGBToHexColor } from "../../Utilities/rgbColorToHexColor"
 import { mapToSAILMargin, SAILMargin } from "../SAILParameters"
 
 type SAILHorizontalLineColor = 'SECONDARY' | 'STANDARD' | 'ACCENT' | string
-const mapToSAILHorizontalLineColor = (strokeColor: RGB): SAILHorizontalLineColor => {
-    const hexColor = toHexColor(strokeColor.r, strokeColor.g, strokeColor.b)
-    switch (hexColor) {
+const mapToSAILHorizontalLineColor = (strokeColor: RGB | undefined): SAILHorizontalLineColor => {
+    if (strokeColor === undefined) return 'STANDARD'
+    const strokeColorHex = RGBToHexColor(strokeColor)
+    switch (strokeColorHex) {
         case '#D4D4D4': return 'SECONDARY'
         case '#222222': return 'STANDARD'
         case '#A3239E': return 'ACCENT'
         default: break
     }
 
-    return hexColor
+    return strokeColorHex
 }
 
 type SAILHorizontalWeight = 'THIN' | 'MEDIUM' | 'THICK'
@@ -76,7 +77,7 @@ const HorizontalLine = ({ color, weight, marginAbove, marginBelow, style }: Hori
 }
 
 export const generateHorizontalLine = async (node: InstanceNode | LineNode | VectorNode): Promise<string[]> => {
-    let lineStrokeColor: RGBA = {r: 1, g: 0, b: 1, a: 1}
+    let lineStrokeColor: RGBA | undefined
     let weight
     let marginAbove: SAILMargin | undefined
     let marginBelow: SAILMargin | undefined
@@ -103,7 +104,7 @@ export const generateHorizontalLine = async (node: InstanceNode | LineNode | Vec
     }
 
     return HorizontalLine({
-        color: mapToSAILHorizontalLineColor(lineStrokeColor),
+        color: lineStrokeColor !== undefined ? mapToSAILHorizontalLineColor(lineStrokeColor) : undefined,
         weight,
         marginAbove,
         marginBelow,

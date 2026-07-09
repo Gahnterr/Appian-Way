@@ -59,6 +59,7 @@ export const generateTextField = async (instanceNode: InstanceNode): Promise<str
         value: booleanProp(props['Has Value'].value) ? stringProp(props['Value'].value) : undefined,
         placeholder: stringProp(props['Placeholder'].value),
         readOnly: props['Is Read Only'].value === 'True',
+        helpTooltip: props['Show Help Icon']?.value === true ? stringProp(props['Tooltip/Label']?.value) : undefined,
         marginAbove: mapToSAILMargin(modes['Margin Above']),
         marginBelow: mapToSAILMargin(modes['Margin Below']),
         required: booleanProp(props['Is Required'].value),

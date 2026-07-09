@@ -29,19 +29,25 @@ export const toHexColor = (r: number, g: number, b: number, a?: number): string 
     }
 
     let colorValues: number[]
-    if (a !== undefined && a >= 0 && a <= 1) {
+    if (a !== undefined && a >= 0 && a < 1) {
         colorValues = [r, g, b, a]
     }
     else {
         colorValues = [r, g, b]
     }
-
-    for (const colorValue of colorValues) {
+    for (const [index, colorValue] of colorValues.entries()) {
         if (colorValue >= 0 && colorValue <= 1) {
             const colorValueAs255 = Math.round(colorValue * 255)
-            const hexComponent = convertDecimalNumberToHexString(colorValueAs255)
-            convertedHexString += hexComponent.length === 1 ? '0' + hexComponent : hexComponent
-        } else throw new Error('Color values must be in the range of 0-1')
+            if (index === 3 && colorValueAs255 === 255) continue // skips if alpha is 1 (fully opaque) for a cleaner hex code.
+            else {
+                const hexComponent = convertDecimalNumberToHexString(colorValueAs255)
+                convertedHexString += hexComponent.length === 1 ? '0' + hexComponent : hexComponent
+            }
+        } else {
+            console.log('Color values must be in the range of 0-1')
+            console.log('Received the following values:')
+            console.log(`r: ${r}, g: ${g}, b: ${b}, a: ${a}`)
+        }
     }
 
     convertedHexString = '#' + convertedHexString

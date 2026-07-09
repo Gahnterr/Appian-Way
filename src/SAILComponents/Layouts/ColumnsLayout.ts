@@ -47,7 +47,7 @@ const ColumnsLayout = ({
     return code
 }
 
-export const generateColumnsLayout = (frameNode: FrameNode, childrenCode: string[][]): string[] => {
+export const generateColumnsLayout = (frameNode: FrameNode | SlotNode, childrenCode: string[][]): string[] => {
     const columns: string[] = []
     const isGridLayout = frameNode.layoutMode === 'GRID'
     let spacing: SAILColumnsLayoutSpacing = 'STANDARD'
@@ -56,33 +56,48 @@ export const generateColumnsLayout = (frameNode: FrameNode, childrenCode: string
         const rows: string[] = [`{`]
         spacing = mapToSAILColumnsLayoutSpacing(frameNode.gridColumnGap)
 
-        for (let rowIndex = 0; rowIndex < frameNode.gridRowCount; rowIndex++) {
-            // TODO: map height to column layout size classes.
-            const rowColumns: string[] = []
+        const getRowAnchorIndex = (child: SceneNode) => 'gridRowAnchorIndex' in child ? child.gridRowAnchorIndex : 0
+        const getColumnAnchorIndex = (child: SceneNode) => 'gridColumnAnchorIndex' in child ? child.gridColumnAnchorIndex : 0
+        const getColumnSpan = (child: SceneNode) => 'gridColumnSpan' in child ? child.gridColumnSpan : 1
 
+        for (let rowIndex = 0; rowIndex < frameNode.gridRowCount; rowIndex++) {
+            const rowCode: string[] = []
+
+            // Render full-width children first (those spanning all grid columns)
+            frameNode.children.forEach((child, childIndex) => {
+                if (getRowAnchorIndex(child) === rowIndex && getColumnSpan(child) === frameNode.gridColumnCount) {
+                    rowCode.push(...childrenCode[childIndex])
+                }
+            })
+
+            // Render normal children in columns (wrapped in a!columnsLayout)
+            const columnLayouts: string[] = []
             for (let columnIndex = 0; columnIndex < frameNode.gridColumnCount; columnIndex++) {
                 const width = mapToSAILColumnWidth(frameNode.gridColumnSizes[columnIndex])
                 const columnContents: string[] = []
 
                 frameNode.children.forEach((child, childIndex) => {
-                    const columnAnchorIndex = 'gridColumnAnchorIndex' in child ? child.gridColumnAnchorIndex : 0
-                    const rowAnchorIndex = 'gridRowAnchorIndex' in child ? child.gridRowAnchorIndex : 0
+                    const isFullWidth = getColumnSpan(child) === frameNode.gridColumnCount
+                    const matchesRowAndColumn = getRowAnchorIndex(child) === rowIndex && getColumnAnchorIndex(child) === columnIndex
 
-                    if (columnAnchorIndex === columnIndex && rowAnchorIndex === rowIndex) {
+                    if (!isFullWidth && matchesRowAndColumn) {
                         columnContents.push(...childrenCode[childIndex])
                     }
                 })
 
-                rowColumns.push(...ColumnLayout({ contents: columnContents, width }))
+                columnLayouts.push(...ColumnLayout({ contents: columnContents, width }))
             }
 
-            rows.push(
-                ...indentStringArray(ColumnsLayout({
-                    columns: rowColumns,
+            if (columnLayouts.length > 0) {
+                rowCode.push(...ColumnsLayout({
+                    columns: columnLayouts,
                     spacing,
                     marginAbove: mapToSAILMargin(frameNode.paddingTop),
                     marginBelow: mapToSAILMargin(frameNode.paddingBottom),
-                }), 1))
+                }))
+            }
+
+            rows.push(...indentStringArray(rowCode, 1))
         }
         rows.push(`},`)
         return rows
@@ -111,6 +126,15 @@ export const isColumnsLayoutFrame = (frameNode: FrameNode): boolean => {
 
     const children = frameNode.children
     if (frameNode.layoutMode === 'HORIZONTAL' && children.every(child => child.type === 'FRAME' || child.type === 'INSTANCE')) return true
+
+    return false
+}
+
+export const isColumnsLayoutSlot = (slotNode: SlotNode): boolean => {
+    if (slotNode.layoutMode === 'GRID') return true
+
+    const children = slotNode.children
+    if (slotNode.layoutMode === 'HORIZONTAL' && children.every(child => child.type === 'FRAME' || child.type === 'INSTANCE')) return true
 
     return false
 }

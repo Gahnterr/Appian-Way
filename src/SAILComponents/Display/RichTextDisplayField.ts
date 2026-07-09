@@ -1,5 +1,5 @@
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
-import { indentStringArray } from "../../Utilities/indent"
+import { indent, indentStringArray } from "../../Utilities/indent"
 import { toHexColor } from "../../Utilities/rgbColorToHexColor"
 import { SAILTextStyle, SAILTextSize, SAILRichTextColor, SAILLabelPosition, SAILTextAlign, SAILMargin, SAILRichTextIconSize, mapToSAILRichTextIconSize, SAILIcon, isSAILIcon, mapToSAILRichTextColor, mapToSAILTextAlign, mapToSAILMargin, mapToSAILTextSize } from "../SAILParameters"
 
@@ -38,7 +38,7 @@ type RichTextDisplayField = {
     labelPosition?: SAILLabelPosition
     instructions?: string
     align?: SAILTextAlign
-    value: (RichTextItem | RichTextIcon)[]
+    value: string[][]
     helpTooltip?: string
     preventWrapping?: boolean
     tooltip?: string
@@ -126,7 +126,7 @@ export const generateSingleRichTextIcon = async (instanceNode: InstanceNode): Pr
 }
 
 export const generateRichTextDisplayField = async (node: TextNode | FrameNode): Promise<string[]> => {
-    const richTextValues: (RichTextItem | RichTextIcon)[] = []
+    const richTextValues: string[][] = []
     let layoutMode = ''
     let align: SAILTextAlign = 'LEFT'
     let alignResolved = false
@@ -139,13 +139,12 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
         marginBelow = mapToSAILMargin(node.paddingBottom)
     }
 
-    if (node.type === 'FRAME' && layoutMode === 'HORIZONTAL') await handleHorizontalChildren()
-    else if (node.type === 'FRAME' && layoutMode === 'VERTICAL') await handleVerticalChildren()
+    if (node.type === 'FRAME' && layoutMode === 'HORIZONTAL') await handleHorizontalChildren(node)
+    else if (node.type === 'FRAME' && layoutMode === 'VERTICAL') await handleVerticalChildren(node)
     else if (node.type === 'TEXT') generateTextFromTextNode(node)
 
-    async function handleHorizontalChildren() {
-        if (node.type !== 'FRAME') return
-        const children = node.children
+    async function handleHorizontalChildren(frameNode: FrameNode) {
+        const children = frameNode.children
         for (const child of children) {
             if (child.type === 'TEXT') {
                 if (!alignResolved) {
@@ -159,21 +158,20 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
                 richTextValues.push(await generateRichTextIcon(child))
                 addHorizontalSpace()
             } else if (child.type === 'FRAME') {
-                const firstChild = child.children[0]
-                if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
-                    richTextValues.push(await generateRichTextIcon(firstChild))
+                const grandChildren = child.children
+                const firstGrandChild = grandChildren[0]
+                if (grandChildren.length === 1 && firstGrandChild.type === 'INSTANCE' && await isRichTextIcon(firstGrandChild)) {
+                    richTextValues.push(await generateRichTextIcon(firstGrandChild))
                     addHorizontalSpace()
-
-                }
+                } 
             }
         }
     }
-    async function handleVerticalChildren() {
-        if (node.type !== 'FRAME') return
-        const children = node.children
+    async function handleVerticalChildren(frameNode: FrameNode) {
+        const children = frameNode.children
         for (const [index, child] of children.entries()) {
             if (child.type === 'TEXT') {
-                align = mapToSAILTextAlign(node.counterAxisAlignItems)
+                align = mapToSAILTextAlign(frameNode.counterAxisAlignItems)
                 preventWrapping = child.textTruncation === 'ENDING'
                 generateTextFromTextNode(child)
                 if (index < children.length - 1) richTextValues.push(Char(10))
@@ -181,9 +179,10 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
                 richTextValues.push(await generateRichTextIcon(child))
                 richTextValues.push(Char(10))
             } else if (child.type === 'FRAME') {
-                const firstChild = child.children[0]
-                if (child.children.length === 1 && firstChild.type === 'INSTANCE' && await isRichTextIcon(firstChild)) {
-                    richTextValues.push(await generateRichTextIcon(firstChild))
+                const grandChildren = child.children
+                const firstGrandChild = grandChildren[0]
+                if (grandChildren.length === 1 && firstGrandChild.type === 'INSTANCE' && await isRichTextIcon(firstGrandChild)) {
+                    richTextValues.push(await generateRichTextIcon(firstGrandChild))
                     richTextValues.push(Char(10))
                 }
             }
@@ -242,21 +241,24 @@ export const isRichTextIcon = async (node: SceneNode): Promise<boolean> => {
         const firstChild = node.children[0]
         return node.children.length === 1 && isRichTextIcon(firstChild)
     }
-    if (node.type !== 'INSTANCE') return false
-    const mainComponentName = await getMainComponentName(node)
-    return mainComponentName !== null && isSAILIcon(mainComponentName)
+    if (node.type === 'INSTANCE') {
+        const mainComponentName = await getMainComponentName(node)
+        return mainComponentName !== undefined && isSAILIcon(mainComponentName)
+    }
+    
+    return false
 }
 
 export const isRichTextDisplayFieldFrame = async (frameNode: FrameNode): Promise<boolean> => {
-    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0) return false
-    if (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0) return false
-    if (frameNode.paddingLeft > 0 || frameNode.paddingRight > 0) return false
+    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0
+        && Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0
+        && frameNode.paddingLeft > 0 || frameNode.paddingRight > 0) return false
 
     const validChildrenComponents = await Promise.all(
         frameNode.children.map(async child => {
             if (child.type === 'TEXT') return true
             if (child.type === 'INSTANCE') return await isRichTextIcon(child)
-            if (child.type === 'FRAME') return await isRichTextDisplayFieldFrame(child)
+            // if (child.type === 'FRAME') return await isRichTextDisplayFieldFrame(child)
             return false
         })
     )

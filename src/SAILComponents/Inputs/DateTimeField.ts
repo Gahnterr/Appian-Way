@@ -1,6 +1,7 @@
 import { booleanProp, stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
+import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { mapToSAILLabelPosition, mapToSAILMargin, SAILLabelPosition, SAILMargin } from "../SAILParameters"
 
 type DateTimeFieldProps = {
@@ -74,4 +75,12 @@ export const generateDateTimeField = async (instanceNode: InstanceNode): Promise
     if (props['Show Time']?.value === true) {
         return DateTimeField({ label, labelPosition, instructions, required, requiredMessage, disabled, readOnly, helpTooltip, marginAbove, marginBelow })
     } else return DateField({ label, labelPosition, instructions, required, requiredMessage, disabled, readOnly, helpTooltip, marginAbove, marginBelow })
+}
+
+export const isDateTimeFieldInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
+    const props = getComponentProps(instanceNode)
+    const showTime = props['Show Time']?.value
+    const nodeMainComponentName = await getMainComponentName(instanceNode)
+    
+    return nodeMainComponentName === 'Date & Time' && showTime === true
 }

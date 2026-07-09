@@ -2,7 +2,8 @@ import { stringProp } from "../../typeguards"
 import { getAppliedModes } from "../../Utilities/getAppliedModes"
 import { getComponentProps } from "../../Utilities/getComponentProps"
 import { getComponentSlot, getTagItemsFromSlot } from "../../Utilities/getComponentSlots"
-import { getLastFillFromNode } from "../../Utilities/getLast__FromNode"
+import { getLastFillFromNode, hasThisBoundVariable } from "../../Utilities/getLast__FromNode"
+import { getMainComponentName } from "../../Utilities/getMainComponentName"
 import { indentStringArray } from "../../Utilities/indent"
 import { RGBAToHexColor, RGBToHexColor } from "../../Utilities/rgbColorToHexColor"
 import { mapToSAILMargin, SAILLabelPosition, SAILMargin } from "../SAILParameters"
@@ -50,18 +51,18 @@ export const generateTagItem = async (instanceNode: InstanceNode): Promise<strin
     let textColor = 'STANDARD'
 
     const tagTextNode = instanceNode.findChild(child => child.type === 'TEXT') as TextNode | null
-    if (tagTextNode !== null) {
-        const tagTextNodeBoundVariables = tagTextNode.boundVariables
-        if (tagTextNodeBoundVariables?.fills === undefined) {
-            const lastTextFill = getLastFillFromNode(tagTextNode, false) 
-            textColor = RGBToHexColor(lastTextFill)
+    if (tagTextNode !== null && tagTextNode.fills !== undefined) {
+        if (await hasThisBoundVariable(tagTextNode, 'Tag Standard Text Color')) textColor = 'STANDARD'
+        else {
+            const lastTextFill = getLastFillFromNode(tagTextNode, false)
+            if (lastTextFill !== undefined) textColor = RGBToHexColor(lastTextFill)
         }
-    }
+    } 
 
     if (modes['Tag BG Color'] !== undefined) backgroundColor = mapToSAILTagBackgroundColor(modes['Tag BG Color'])
     else {
         const lastFill = getLastFillFromNode(instanceNode, true)
-        backgroundColor = mapToSAILTagBackgroundColor(lastFill)
+        if (lastFill !== undefined) backgroundColor = mapToSAILTagBackgroundColor(lastFill)
     }
 
     return TagItem({
@@ -107,7 +108,7 @@ const TagField = ({
     if (helpTooltip) code.push(`  helpTooltip: "${helpTooltip}",`)
     code.push(`  tags: {`)
     for (const tag of tags) code.push(...indentStringArray(tag))
-    code.push(`  }`)
+    code.push(`  },`)
     if (align) code.push(`  align: "${align}",`)
     if (size) code.push(`  size: "${size}",`)
     if (marginAbove) code.push(`  marginAbove: "${marginAbove}",`)
@@ -137,3 +138,7 @@ export const generateTagField = async (instanceNode: InstanceNode): Promise<stri
     })
 }
 
+export const isTagFieldInstance = async (instanceNode: InstanceNode): Promise<boolean> => {
+    const instanceMainComponentName = await getMainComponentName(instanceNode)
+    return instanceMainComponentName === 'Tag Field'
+}
