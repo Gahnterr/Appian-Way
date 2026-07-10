@@ -1,5 +1,5 @@
-import { getLastFillFromNode, getLastStrokeFromNode } from "../Utilities/getLast__FromNode"
-import { RGBAToHexColor, RGBToHexColor, toHexColor } from "../Utilities/rgbColorToHexColor"
+import { getLastFillFromNode } from "../Utilities/getLast__FromNode"
+import { RGBAToHexColor, RGBToHexColor } from "../Utilities/rgbColorToHexColor"
 
 export type SAILTextStyle = 'PLAIN' | 'EMPHASIS' | 'STRONG' | 'UNDERLINE' | 'STRIKETHROUGH'
 export const mapToSAILTextStyle = (figmaFontStyle: FontStyle): SAILTextStyle => {

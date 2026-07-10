@@ -80,7 +80,7 @@ export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boo
         return false
     }
 
-    if (frameNode.layoutMode === 'HORIZONTAL' || frameNode.layoutMode === 'VERTICAL') {
+    if (frameNode.layoutMode === 'HORIZONTAL') {
         for (const child of frameNode.children) {
             if (
                 await isLayoutFrame(child)

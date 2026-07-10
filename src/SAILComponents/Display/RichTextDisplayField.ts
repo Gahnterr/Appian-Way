@@ -1,5 +1,5 @@
 import { getMainComponentName } from "../../Utilities/getMainComponentName"
-import { indent, indentStringArray } from "../../Utilities/indent"
+import { indentStringArray } from "../../Utilities/indent"
 import { toHexColor } from "../../Utilities/rgbColorToHexColor"
 import { SAILTextStyle, SAILTextSize, SAILRichTextColor, SAILLabelPosition, SAILTextAlign, SAILMargin, SAILRichTextIconSize, mapToSAILRichTextIconSize, SAILIcon, isSAILIcon, mapToSAILRichTextColor, mapToSAILTextAlign, mapToSAILMargin, mapToSAILTextSize } from "../SAILParameters"
 
@@ -127,25 +127,28 @@ export const generateSingleRichTextIcon = async (instanceNode: InstanceNode): Pr
 
 export const generateRichTextDisplayField = async (node: TextNode | FrameNode): Promise<string[]> => {
     const richTextValues: string[][] = []
-    let layoutMode = ''
     let align: SAILTextAlign = 'LEFT'
     let alignResolved = false
     let preventWrapping = false
     let marginAbove: SAILMargin = 'NONE'
     let marginBelow: SAILMargin = 'NONE'
     if (node.type === 'FRAME') {
-        layoutMode = node.layoutMode
         marginAbove = mapToSAILMargin(node.paddingTop)
         marginBelow = mapToSAILMargin(node.paddingBottom)
     }
 
-    if (node.type === 'FRAME' && layoutMode === 'HORIZONTAL') await handleHorizontalChildren(node)
-    else if (node.type === 'FRAME' && layoutMode === 'VERTICAL') await handleVerticalChildren(node)
-    else if (node.type === 'TEXT') generateTextFromTextNode(node)
+    await processRichTextContent(node)
 
-    async function handleHorizontalChildren(frameNode: FrameNode) {
+    async function processRichTextContent(processedNode: SceneNode) {
+        if (processedNode.type === 'FRAME' && processedNode.layoutMode === 'HORIZONTAL') await handleHorizontalFrameChildren(processedNode)
+        else if (processedNode.type === 'FRAME' && processedNode.layoutMode === 'VERTICAL') await handleVerticalFrameChildren(processedNode)
+        else if (processedNode.type === 'TEXT') generateTextFromTextNode(processedNode)
+        else if (processedNode.type === 'INSTANCE') await generateRichTextIcon(processedNode)
+    }
+
+    async function handleHorizontalFrameChildren(frameNode: FrameNode) {
         const children = frameNode.children
-        for (const child of children) {
+        for (const [index, child] of children.entries()) {
             if (child.type === 'TEXT') {
                 if (!alignResolved) {
                     align = mapToSAILTextAlign(child.textAlignHorizontal)
@@ -156,36 +159,25 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
                 generateTextFromTextNode(child)
             } else if (child.type === 'INSTANCE') {
                 richTextValues.push(await generateRichTextIcon(child))
-                addHorizontalSpace()
             } else if (child.type === 'FRAME') {
-                const grandChildren = child.children
-                const firstGrandChild = grandChildren[0]
-                if (grandChildren.length === 1 && firstGrandChild.type === 'INSTANCE' && await isRichTextIcon(firstGrandChild)) {
-                    richTextValues.push(await generateRichTextIcon(firstGrandChild))
-                    addHorizontalSpace()
-                } 
+                await processRichTextContent(child)
             }
+            if (index < children.length - 1) addHorizontalSpace(frameNode.itemSpacing)
         }
     }
-    async function handleVerticalChildren(frameNode: FrameNode) {
+    async function handleVerticalFrameChildren(frameNode: FrameNode) {
         const children = frameNode.children
         for (const [index, child] of children.entries()) {
             if (child.type === 'TEXT') {
                 align = mapToSAILTextAlign(frameNode.counterAxisAlignItems)
                 preventWrapping = child.textTruncation === 'ENDING'
                 generateTextFromTextNode(child)
-                if (index < children.length - 1) richTextValues.push(Char(10))
             } else if (child.type === 'INSTANCE') {
                 richTextValues.push(await generateRichTextIcon(child))
-                richTextValues.push(Char(10))
             } else if (child.type === 'FRAME') {
-                const grandChildren = child.children
-                const firstGrandChild = grandChildren[0]
-                if (grandChildren.length === 1 && firstGrandChild.type === 'INSTANCE' && await isRichTextIcon(firstGrandChild)) {
-                    richTextValues.push(await generateRichTextIcon(firstGrandChild))
-                    richTextValues.push(Char(10))
-                }
+                await processRichTextContent(child)
             }
+            if (index < children.length - 1) richTextValues.push(Char(10))
         }
     }
     function generateTextFromTextNode(textNode: TextNode) {
@@ -217,13 +209,11 @@ export const generateRichTextDisplayField = async (node: TextNode | FrameNode): 
             }
         }
     }
-    function addHorizontalSpace() {
+    function addHorizontalSpace(itemSpacing: number) {
         if (node.type === 'FRAME') {
             const space = ' '
-            const spacer = RichTextItem({ text: space.repeat(node.itemSpacing) })
-            if (node.type === 'FRAME') {
-                richTextValues.push(spacer)
-            }
+            const spacer = RichTextItem({ text: space.repeat(itemSpacing) })
+            richTextValues.push(spacer)
         }
     }
 
@@ -258,7 +248,7 @@ export const isRichTextDisplayFieldFrame = async (frameNode: FrameNode): Promise
         frameNode.children.map(async child => {
             if (child.type === 'TEXT') return true
             if (child.type === 'INSTANCE') return await isRichTextIcon(child)
-            // if (child.type === 'FRAME') return await isRichTextDisplayFieldFrame(child)
+            if (child.type === 'FRAME') return await isRichTextDisplayFieldFrame(child)
             return false
         })
     )
