@@ -121,7 +121,9 @@ export const generateColumnsLayout = (frameNode: FrameNode | SlotNode, childrenC
 }
 
 export const isColumnsLayoutFrame = (frameNode: FrameNode): boolean => {
-    if (Array.isArray(frameNode.fills) && frameNode.fills.length !== 0 || frameNode.strokes.length !== 0) return false
+    if ((Array.isArray(frameNode.fills) && frameNode.fills.length === 0) 
+        && frameNode.strokes.length === 0
+        && frameNode.paddingTop !== 0 && frameNode.paddingRight !== 0 && frameNode.paddingBottom !== 0 && frameNode.paddingLeft !== 0) return false
     if (frameNode.layoutMode === 'GRID') return true
 
     const children = frameNode.children

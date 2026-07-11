@@ -100,7 +100,7 @@ async function generateSAILFromNode(currentNode: SceneNode | null, nestingLevel:
         for (const node of slotContents) {
           await addToCode(await generateSAILFromNode(node, nestingLevel + 1))
         }
-    }
+      }
       code.push(`},`)
       break
     }
@@ -203,15 +203,34 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
     code.push(...indentStringArray(await generateButtonArrayLayout(currentNode), nestingLevel))
   } else if (await isRichTextDisplayFieldFrame(currentNode)) {
     code.push(...indentStringArray(await generateRichTextDisplayField(currentNode), nestingLevel))
-  } else if (await isSideBySideLayoutFrame(currentNode)) {
-    const childrenCode: string[][] = []
-
-    for (const child of currentNode.children) {
-      childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
+  } else if (await isCardLayoutNode(currentNode) && !isSideBySideContent) {
+    if (isFrameWithChildrenInHorizontalLayout(currentNode)) {
+      const childrenCode: string[][] = []
+      for (const child of currentNode.children) {
+        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
+      }
+      code.push(...indentStringArray(await generateCardWithHorizontalLayout(currentNode, childrenCode)))
+    } else {
+      const childrenCode: string[][] = []
+      for (const child of currentNode.children) {
+        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel))
+      }
+      code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode.flat()), nestingLevel))
     }
 
-    code.push(...indentStringArray(generateSideBySideLayout(currentNode, childrenCode), nestingLevel))
-
+  } else if (await isSideBySideLayoutFrame(currentNode, isSideBySideContent)) {
+    if (currentNode.layoutMode === 'VERTICAL' && isSideBySideContent) {
+      // For stacking nested sideBySideLayout content
+      for (const child of currentNode.children) {
+        code.push(...await generateSAILFromNode(child, nestingLevel, true))
+      }
+    } else {
+      const childrenCode: string[][] = []
+      for (const child of currentNode.children) {
+        childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
+      }
+      code.push(...indentStringArray(generateSideBySideLayout(currentNode, childrenCode), nestingLevel))
+    }
   } else if (isColumnsLayoutFrame(currentNode) && !isSideBySideContent) {
     const childrenCode: string[][] = []
     const isGridLayout = currentNode.layoutMode === 'GRID'
@@ -229,21 +248,6 @@ async function generateFrameComponent(currentNode: FrameNode, code: string[], ne
     }
 
     code.push(...indentStringArray(generateColumnsLayout(currentNode, childrenCode), nestingLevel))
-
-  } else if (await isCardLayoutNode(currentNode) && !isSideBySideContent) {
-    if (isFrameWithChildrenInHorizontalLayout(currentNode)) {
-      const childrenCode: string[][] = []
-      for (const child of currentNode.children) {
-        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel, true))
-      }
-      code.push(...indentStringArray(await generateCardWithHorizontalLayout(currentNode, childrenCode)))
-    } else {
-      const childrenCode: string[][] = []
-      for (const child of currentNode.children) {
-        if (child) childrenCode.push(await generateSAILFromNode(child, nestingLevel))
-      }
-      code.push(...indentStringArray(await generateCardLayout(currentNode, childrenCode.flat()), nestingLevel))
-    }
 
   } else code.push(...["/* This frame's contents cannot be translated into SAIL code.", "   Ensure valid and updated Verato UI design library components are being used. */"])
 }

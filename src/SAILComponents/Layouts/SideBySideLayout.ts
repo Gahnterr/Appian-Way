@@ -73,23 +73,16 @@ export const generateSideBySideLayout = (frameNode: FrameNode, childrenCode: str
     })
 }
 
-export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boolean> => {
+export const isSideBySideLayoutFrame = async (frameNode: FrameNode, isSideBySideContent = false): Promise<boolean> => {
     if ((Array.isArray(frameNode.fills) && frameNode.fills.length !== 0)
         || (Array.isArray(frameNode.strokes) && frameNode.strokes.length !== 0)
         || (frameNode.paddingTop > 0 || frameNode.paddingBottom > 0 || frameNode.paddingLeft > 0 || frameNode.paddingRight > 0)) {
         return false
     }
 
-    if (frameNode.layoutMode === 'HORIZONTAL') {
+    if (frameNode.layoutMode === 'HORIZONTAL' || (isSideBySideContent && frameNode.layoutMode === 'VERTICAL')) {
         for (const child of frameNode.children) {
-            if (
-                await isLayoutFrame(child)
-                || await isSupportedInstanceNode(child)
-                || child.type === 'TEXT'
-                || child.type === 'RECTANGLE'
-                || child.type === 'VECTOR'
-                || child.type === 'LINE'
-            ) {
+            if (await isValidSideBySideInnerItem(child, isSideBySideContent)) {
                 return true
             }
         }
@@ -98,8 +91,8 @@ export const isSideBySideLayoutFrame = async (frameNode: FrameNode): Promise<boo
     return false
 }
 
-const isLayoutFrame = async (node: SceneNode): Promise<boolean> => {
-    if (node.type === 'FRAME') return  await isSideBySideLayoutFrame(node)
+const isLayoutFrame = async (node: SceneNode, isSideBySideContent: boolean): Promise<boolean> => {
+    if (node.type === 'FRAME') return  await isSideBySideLayoutFrame(node, isSideBySideContent)
         || await isRichTextDisplayFieldFrame(node)
         || await isButtonArrayFrame(node)
         || isImageField(node)
@@ -132,4 +125,13 @@ const isSupportedInstanceNode = async (node: SceneNode): Promise<boolean> => {
     }
 
     return false
+}
+
+export async function isValidSideBySideInnerItem(child: SceneNode, isSideBySideContent: boolean) {
+    return await isLayoutFrame(child, isSideBySideContent)
+        || await isSupportedInstanceNode(child)
+        || child.type === 'TEXT'
+        || child.type === 'RECTANGLE'
+        || child.type === 'VECTOR'
+        || child.type === 'LINE'
 }

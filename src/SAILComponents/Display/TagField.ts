@@ -97,7 +97,7 @@ type TagField = {
 }
 
 const TagField = ({
-    label, labelPosition, instructions, helpTooltip, tags, align, size, marginAbove, marginBelow
+    label, labelPosition = 'COLLAPSED', instructions, helpTooltip, tags, align, size, marginAbove, marginBelow
 }: TagField): string[] => {
     const code: string[] = []
 
